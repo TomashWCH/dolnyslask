@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atrakcje Dolnego Śląska</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a2e;--paper:#f5f0e8;--parchment:#ede8d8;--accent:#8b2c2c;--gold:#c9a84c;--moss:#4a6741;--sky:#4a7fa5;--muted:#8a8070;--checked-bg:#eaf5ea;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'Lato',sans-serif;min-height:100vh;}
+header{background:var(--ink);color:var(--paper);padding:2rem 1.5rem 1.8rem;text-align:center;position:relative;overflow:hidden;}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--gold),var(--moss),var(--sky),var(--accent));}
+h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;}
+h1 span{color:var(--gold);}
+.subtitle{font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.5);margin-top:.3rem;font-weight:300;}
+.controls{display:flex;flex-wrap:wrap;gap:.6rem;padding:1rem 1.2rem;background:var(--parchment);border-bottom:1px solid rgba(0,0,0,.08);align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.stats{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--muted);}
+.stats strong{color:var(--moss);font-size:1.1rem;}
+.btn-group{display:flex;gap:.4rem;flex-wrap:wrap;}
+button{font-family:'Lato',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .9rem;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;transition:all .18s;border-radius:2px;}
+button:hover{background:var(--ink);color:var(--paper);}
+button.danger{border-color:var(--accent);color:var(--accent);}
+button.danger:hover{background:var(--accent);color:var(--paper);}
+.progress-bar{height:3px;background:rgba(0,0,0,.08);}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--moss),var(--gold));transition:width .4s ease;}
+.category-section{margin:0;}
+.category-header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1.2rem .4rem;cursor:pointer;user-select:none;}
+.category-header h2{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex:1;}
+.cat-count{font-size:.72rem;color:var(--muted);font-weight:300;}
+.cat-toggle{font-size:.72rem;color:var(--muted);transition:transform .2s;}
+.category-section.collapsed .cat-toggle{transform:rotate(-90deg);}
+.category-section.collapsed .items-list{display:none;}
+.items-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:0;padding:0 .8rem .8rem;}
+.item{display:flex;align-items:flex-start;gap:.6rem;padding:.6rem .7rem;cursor:pointer;border-radius:4px;transition:background .15s;user-select:none;}
+.item:hover{background:rgba(0,0,0,.04);}
+.item.checked{background:var(--checked-bg);}
+.item.checked .item-name{text-decoration:line-through;color:var(--moss);opacity:.75;}
+.item.checked .item-short{opacity:.5;}
+.checkbox{width:17px;height:17px;min-width:17px;border:2px solid rgba(0,0,0,.22);border-radius:3px;display:flex;align-items:center;justify-content:center;margin-top:2px;transition:all .15s;font-size:.65rem;color:white;background:transparent;}
+.item.checked .checkbox{background:var(--moss);border-color:var(--moss);}
+.item-idx{font-size:.62rem;font-weight:700;color:var(--muted);min-width:20px;text-align:right;margin-top:3px;}
+.item-body{flex:1;min-width:0;}
+.item-name{font-weight:700;font-size:.85rem;color:var(--ink);line-height:1.3;}
+.item-short{font-size:.7rem;color:var(--muted);font-weight:300;margin-top:.1rem;line-height:1.35;}
+.item-meta{display:flex;gap:.5rem;margin-top:.25rem;flex-wrap:wrap;}
+.badge{font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:.15rem .4rem;border-radius:2px;text-transform:uppercase;}
+.badge-dist{background:rgba(74,127,165,.12);color:var(--sky);}
+.badge-time{background:rgba(74,103,65,.12);color:var(--moss);}
+.info-btn{font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:.15rem .45rem;border-radius:2px;background:rgba(201,168,76,.15);color:#8a6a10;border:none;cursor:pointer;margin-left:auto;white-space:nowrap;transition:background .15s;}
+.info-btn:hover{background:rgba(201,168,76,.35);}
+.divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.07),transparent);margin:0 1.2rem;}
+.hidden{display:none!important;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,10,20,.65);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--paper);width:100%;max-width:520px;max-height:88vh;border-radius:12px 12px 0 0;overflow:hidden;display:flex;flex-direction:column;transform:translateY(40px);transition:transform .28s ease;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-img{width:100%;height:200px;object-fit:cover;background:#d4cfc5;flex-shrink:0;}
+.modal-img-placeholder{width:100%;height:200px;background:linear-gradient(135deg,var(--parchment),#d4cfc5);display:flex;align-items:center;justify-content:center;font-size:3rem;flex-shrink:0;}
+.modal-body{padding:1.2rem 1.4rem 1.6rem;overflow-y:auto;}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;color:var(--ink);line-height:1.25;}
+.modal-badges{display:flex;gap:.5rem;margin:.6rem 0 .9rem;flex-wrap:wrap;}
+.modal-badge{font-size:.68rem;font-weight:700;padding:.2rem .55rem;border-radius:3px;letter-spacing:.07em;text-transform:uppercase;}
+.modal-nav-btn{display:inline-block;padding:.5rem 1.2rem;background:var(--moss);color:white;text-decoration:none;border-radius:4px;font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:.2rem 0 .5rem;}
+.modal-nav-btn:hover{background:#3a5233;}
+.modal-desc{font-size:.88rem;line-height:1.7;color:#3a3530;}
+.modal-close{position:absolute;top:.8rem;right:.9rem;width:2rem;height:2rem;border-radius:50%;background:rgba(0,0,0,.35);color:white;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;z-index:101;}
+.modal-wrapper{position:relative;width:100%;max-width:520px;}
+footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);border-top:1px solid rgba(0,0,0,.07);margin-top:.5rem;}
+@media(min-width:600px){.modal-overlay{align-items:center;}.modal{border-radius:12px;max-height:80vh;}.modal-img,.modal-img-placeholder{height:240px;}}
+@media(max-width:400px){.items-list{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Atrakcje <span>Dolnego Śląska</span></h1>
+  <p class="subtitle">Osobista lista odkryć · odległości z Iwin</p>
+</header>
+<div class="controls">
+  <div class="stats">Zaliczone: <strong id="cc">0</strong> / <span id="tc">0</span></div>
+  <div class="btn-group">
+    <button onclick="filterView('all')">Wszystkie</button>
+    <button onclick="filterView('todo')">Do zrobienia</button>
+    <button onclick="filterView('done')">Zaliczone ✓</button>
+    <button class="danger" onclick="clearAll()">Resetuj</button>
+  </div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+<div id="app"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="overlay" onclick="closeModal(event)">
+  <div class="modal-wrapper">
+    <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    <div class="modal" id="modal">
+      <div id="modal-img-wrap"></div>
+      <div class="modal-body">
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-badges">
+          <a class="modal-nav-btn" id="modal-nav" href="#" target="_blank" rel="noopener">🗺️ Nawiguj z Iwin</a>
+        </div>
+        <div class="modal-desc" id="modal-desc"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Kliknij aby zaznaczyć · ikona 📖 otwiera opis · nawigacja Google Maps z Iwin</footer>
+
+<script>
+const DATA = [
+  {
+    cat: "🏰 Zamki i twierdze",
+    items: [
+      { name: "Zamek Książ", short: "Jeden z największych zamków w Polsce, Wałbrzych",
+        km: 36, time: "31 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Zamek_Ksi%C4%85%C5%BC_2015.jpg/800px-Zamek_Ksi%C4%85%C5%BC_2015.jpg",
+        desc: "Zamek Książ w Wałbrzychu to jeden z największych zamków w Polsce i drugi co do wielkości na Dolnym Śląsku, wybudowany w XIII wieku przez Bolka I Surowego. Przez wieki był siedzibą możnych rodów, w tym Hochbergów, którzy rozbudowali go do imponującego, barokowego kształtu. W czasie II wojny światowej Niemcy wykuli pod zamkiem sieć tuneli, będących częścią tajemniczego projektu Riese. Dziś można zwiedzać bogato zdobione komnaty, stajnie z kolekcją powozów oraz spacerować po rozległym tarasie z panoramą Gór Wałbrzyskich. Wokół zamku rozciąga się romantyczny park krajobrazowy." },
+      { name: "Zamek Grodziec", short: "Średniowieczna twierdza na bazaltowym wzgórzu",
+        km: 104, time: "1 godz 29 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Zamek_Grodziec_2015.jpg/800px-Zamek_Grodziec_2015.jpg",
+        desc: "Zamek Grodziec wznosi się na bazaltowym wzgórzu koło Złotoryi, górując nad okolicą z wysokości 389 m n.p.m. Zbudowany w XV wieku, należał do najważniejszych twierdz Dolnego Śląska i był wielokrotnie oblegany. Imponujące cylindryczne wieże i dobrze zachowane mury tworzą niepowtarzalną sylwetkę widoczną z daleka. Na zamku odbywają się pokazy walk rycerskich i turnieje, ożywiające jego bogatą historię. Z ruin rozciąga się szeroka panorama na Nizinę Śląską i Sudety." },
+      { name: "Zamek Bolków", short: "Ruiny gotyckiego zamku, panorama Sudetów",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Zamek_Bol%C3%B3w.jpg/800px-Zamek_Bol%C3%B3w.jpg",
+        desc: "Zamek Bolków to gotycka twierdza piastowska z XIII wieku, strzegąca niegdyś ważnego szlaku handlowego przez Sudety. Wznosi się na wysokim wzgórzu z masywną wieżą donżonu, z której roztacza się wspaniały widok na Pogórze Sudeckie. Zamek był kilkukrotnie przebudowywany, a jego mury pamiętają najazdy husyckie i walki z rycerzami-rozbójnikami. Dobrze zachowane baszty i bramy robią ogromne wrażenie, a wnętrza mieszczą ekspozycję historyczną. Latem na dziedzińcu odbywają się spektakle i jarmarki średniowieczne." },
+      { name: "Zamek Czocha", short: "Bajkowy zamek nad Jeziorem Leśniańskim",
+        km: 138, time: "1 godz 58 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Zamek_Czocha_2.jpg/800px-Zamek_Czocha_2.jpg",
+        desc: "Zamek Czocha to jeden z najlepiej zachowanych i najpiękniejszych zamków na Dolnym Śląsku, malowniczo położony nad Jeziorem Leśniańskim. Jego historia sięga XIII wieku, choć obecny romantyczny wygląd pochodzi z przebudowy z początku XX wieku przez pruskiego bankiera. Zamek słynie z licznych tajemnic i legend, w tym rzekomo ukrytego skarbu i zjaw błąkających się po podziemiach. Można tu zwiedzić bogato wyposażone komnaty, kaplice i lochty, a na strzelnicy spróbować sił w łucznictwie. Otoczenie jeziora tworzy niepowtarzalną, bajkową atmosferę." },
+      { name: "Zamek Kliczków", short: "Renesansowy zamek-hotel w Borach Dolnośląskich",
+        km: 144, time: "2 godz 4 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Kliczkow_castle.jpg/800px-Kliczkow_castle.jpg",
+        desc: "Zamek Kliczków to renesansowo-barokowa rezydencja z XVII wieku, otoczona rozległym parkiem angielskim w sercu Borów Dolnośląskich. Dziś działa jako luksusowy hotel, ale można go zwiedzać i podziwiać bogato zdobione sale oraz barokowe ogrody. Dawniej stanowił własność śląskiej szlachty, a jego historia splata się z dziejami całego regionu. Otaczająca zamek puszcza tworzy niezwykły klimat oddalenia od cywilizacji. Warto połączyć wizytę ze spacerem po rozległych alejach parkowych." },
+      { name: "Zamek Chojnik", short: "Ruiny zamku rycerskiego w Karkonoszach",
+        km: 91, time: "1 godz 18 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Zamek_Chojnik.jpg/800px-Zamek_Chojnik.jpg",
+        desc: "Zamek Chojnik góruje nad Sobieszowem na skalnym grzbiecie Karkonoszy, na wysokości 627 m n.p.m. Zbudowany w XIV wieku przez Bolka II Małego, był jedną z najpotężniejszych twierdz górskich w Sudetach. Legenda głosi, że księżniczka z zamku żądała od adoratorów przejazdu konno wokół murów — ci którzy spadli, ginęli w przepaści. Ruiny zachowały imponującą okrągłą wieżę widokową z panoramą Karkonoszy i Kotliny Jeleniogórskiej. Dojście na zamek jest popularną wycieczką z Jeleniej Góry." },
+      { name: "Twierdza Srebrna Góra", short: "XVIII-wieczna twierdza górska, imponująca skala",
+        km: 23, time: "19 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/SrebrnaGora_Twierdza.jpg/800px-SrebrnaGora_Twierdza.jpg",
+        desc: "Twierdza Srebrna Góra to jeden z najlepiej zachowanych osiemnastowiecznych kompleksów fortyfikacyjnych w Europie, zbudowany przez Fryderyka Wielkiego po wojnach śląskich. Wznosi się na grzbiecie Gór Bardzkich na wysokości 746 m n.p.m. i nigdy nie została zdobyta podczas oblężeń. System bastionów, kurtyn i potern rozciąga się na powierzchni kilkudziesięciu hektarów i robi ogromne wrażenie skalą i inżynierską precyzją. Wnętrza mieszczą ekspozycje historyczne i wojskowe, a z wałów roztaczają się szerokie widoki na Kotlinę Kłodzką. Twierdza jest jedną z czołowych atrakcji fortyfikacyjnych w Polsce." },
+      { name: "Zamek Niesytno", short: "Romantyczna ruina nad rzeką, okolice Przemkowa",
+        km: 120, time: "1 godz 43 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Niesytno_zamek.jpg/800px-Niesytno_zamek.jpg",
+        desc: "Zamek Niesytno to malownicze ruiny gotyckiej warowni z XIV wieku, ukryte w lesie nad rzeką Czarną Wodą koło Przemkowa. Przez wieki był siedzibą rycerską, a potem popadł w ruinę po pożarze w XIX wieku. Romantyczne mury porośnięte bluszczem i otoczenie dzikiej przyrody czynią go miejscem wyjątkowym dla miłośników opuszczonych zamków. Dojście do ruin prowadzi leśną ścieżką, co zwiększa atrakcyjność wycieczki. To miejsce wciąż rzadko odwiedzane i nie skomercjalizowane." },
+      { name: "Zamek Świny", short: "Gotyckie ruiny koło Bolkowa",
+        km: 66, time: "57 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Zamek_%C5%9Awiny.jpg/800px-Zamek_%C5%9Awiny.jpg",
+        desc: "Zamek Świny to rozległe ruiny gotyckiej warowni z XIV wieku, wzniesionej na wzgórzu koło Bolkowa przez ród Świnków. Była to jedna z najważniejszych siedzib rycerskich na Dolnym Śląsku, wielokrotnie atakowana i zmieniana przez właścicieli. Imponujące rozmiary ruin — zachowane fragmenty wież, kurtyn i piwnic — zaskakują każdego zwiedzającego. Z zamkowego wzgórza roztacza się ładny widok na otaczające Pogórze Sudeckie. Ruiny są ogólnodostępne i łatwo dostępne z Bolkowa." },
+      { name: "Zamek Wleń", short: "Ruiny zamku strzegącego przełomu Bobru",
+        km: 102, time: "1 godz 27 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Zamek_Wle%C5%84.jpg/800px-Zamek_Wle%C5%84.jpg",
+        desc: "Zamek Wleń to romańsko-gotyckie ruiny z XII wieku, położone na skale nad malowniczym przełomem rzeki Bóbr. Był jedną z pierwszych kamiennych budowli obronnych na Dolnym Śląsku i siedzibą ważnych śląskich rodów. Charakterystyczna cylindryczna wieża widokowa góruje nad okolicą i jest widoczna z daleka. Z ruin roztacza się piękny widok na dolinkę Bobru i otaczające wzgórza Pogórza Izerskiego. Wleń to urocze miasteczko, warte wizytowania niezależnie od samego zamku." },
+      { name: "Zamek Ząbkowice Śląskie", short: "Renesansowa ruina, krzywa wieża, Ząbkowice",
+        km: 27, time: "23 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Z%C4%85bkowice_%C5%9Al%C4%85skie_castle.jpg/800px-Z%C4%85bkowice_%C5%9Al%C4%85skie_castle.jpg",
+        desc: "Zamek Ząbkowice Śląskie to imponujące renesansowe ruiny z XVI wieku, zbudowane przez biskupa wrocławskiego Jana V Turzo. Stoi tuż obok słynnej krzywej wieży — dzwonnicy kościelnej przechylonej o kilka stopni, zwanej śląską Wieżą Eiffla. Zamek jest jedną z większych renesansowych budowli obronnych na Śląsku, a jego rozmiary i zachowane detale architektoniczne robią wielkie wrażenie. Ruiny są sukcesywnie odtwarzane i w sezonie odbywają się tu spektakle i imprezy plenerowe. Ząbkowice Śląskie to atrakcyjne miasteczko z bogatą historią i klimatycznym rynkiem." },
+    ]
+  },
+  {
+    cat: "⛰️ Góry i szczyty",
+    items: [
+      { name: "Śnieżka (1603 m)", short: "Najwyższy szczyt Karkonoszy i Sudetów",
+        km: 85, time: "1 godz 12 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Snie%C5%BCka_from_Kopa.jpg/800px-Snie%C5%BCka_from_Kopa.jpg",
+        desc: "Śnieżka to najwyższy szczyt Karkonoszy i całych Sudetów, wznoszący się na 1603 m n.p.m. na polsko-czeskiej granicy. Na szczycie stoi charakterystyczna, futurystyczna stacja meteorologiczna w kształcie latającego talerza, będąca symbolem góry. Wejście możliwe jest kilkoma szlakami, najpopularniejszym z Karpacza przez Kotłowe Stawy oraz przez przełęcz Okraj ze strony czeskiej. Przy dobrej pogodzie widok ze szczytu obejmuje setki kilometrów — od Tatr po góry Niemiec i Czech. Zimą Śnieżka bywa dostępna tylko dla doświadczonych turystów ze względu na śnieżną pokrywę i silny wiatr." },
+      { name: "Śnieżnik (1425 m)", short: "Masyw Śnieżnika, panorama 360°",
+        km: 81, time: "1 godz 9 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Snieznik_kl_vrchol.jpg/800px-Snieznik_kl_vrchol.jpg",
+        desc: "Śnieżnik to najwyższy szczyt Masywu Śnieżnika i całych Sudetów Wschodnich, osiągający 1425 m n.p.m. na polsko-czeskiej granicy. Jest jedynym szczytem masywu wyrastającym ponad górną granicę lasu, co zapewnia niemal pełną panoramę 360 stopni. Z wierzchołka roztacza się widok na Karkonosze, Tatry w dobre dni i rozległe Morawy po stronie czeskiej. W okolicach szczytu bierze swój początek rzeka Morawa, dopływ Dunaju, co czyni go miejscem szczególnym dla miłośników geografii. Masyw słynie z gęstej sieci jaskiń i podziemi, w tym pobliskiej Jaskini Niedźwiedziej." },
+      { name: "Luž / Lausche (793 m)", short: "Wygasły wulkan w Górach Łużyckich, DE/CZ",
+        km: 150, time: "2 godz 9 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Lausche_Zittauer_Gebirge.jpg/800px-Lausche_Zittauer_Gebirge.jpg",
+        desc: "Luž, znany po niemiecku jako Lausche, to najwyższy szczyt Gór Łużyckich (793 m n.p.m.) na pograniczu Czech i Niemiec. Jest wygasłym wulkanem bazaltowym o charakterystycznej, stożkowatej sylwetce, widocznej z wielu miejsc w okolicy. Z wieży widokowej na szczycie roztacza się panorama na Niemcy, Polskę i Czechy — jeden z niewielu miejsc, gdzie można zobaczyć trzy kraje jednocześnie. Wejście z Jonsdorfu po stronie niemieckiej lub z Nowego Města po stronie czeskiej zajmuje około godziny. To jeden z 22 szczytów Korony Sudetów PTTK." },
+      { name: "Wielka Sowa (1015 m)", short: "Najwyższy szczyt Gór Sowich, wieża widokowa",
+        km: 14, time: "12 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Wielka_Sowa_szczyt.jpg/800px-Wielka_Sowa_szczyt.jpg",
+        desc: "Wielka Sowa to najwyższy szczyt Gór Sowich (1015 m n.p.m.) i jeden z najbliższych Iwinom szczytów Korony Sudetów. Na wierzchołku stoi stalowa wieża widokowa, z której rozciąga się panorama obejmująca Kotlinę Kłodzką, Karkonosze i Góry Stołowe. Popularne szlaki prowadzą z Walimia, Rzeczki i Przełęczy Jugowskiej, a czas wejścia wynosi od 1 do 2 godzin. Góry Sowie słyną z rozbudowanej sieci podziemnych tuneli z czasów II wojny światowej (projekt Riese), dostępnych w Osówce i Włodarz. Latem i zimą Wielka Sowa przyciąga rzesze turystów z całego Dolnego Śląska." },
+      { name: "Skopiec (724 m)", short: "Korona Sudetów, Góry Kaczawskie, wieża",
+        km: 50, time: "42 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Skopiec_2011.jpg/800px-Skopiec_2011.jpg",
+        desc: "Skopiec to najwyższy szczyt Gór Kaczawskich (724 m n.p.m.) i jeden z 22 szczytów Korony Sudetów PTTK. Na wierzchołku stoi drewniana wieża widokowa, z której widać rozległą panoramę Dolnego Śląska — Karkonosze, Góry Sowie i Wałbrzyskie. Wejście z pobliskich miejscowości zajmuje ok. 1–1,5 godziny spokojnym tempem. Góry Kaczawskie to region szczególny geologicznie — można tu znaleźć półszlachetne kamienie i skamieniałości. Szlak przez Skopiec można łączyć z wycieczką do pobliskich formacji wulkanicznych." },
+      { name: "Ostrzyca Proboszczowska (501 m)", short: "Śląski Matterhorn, bazaltowy stożek",
+        km: 96, time: "1 godz 22 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Ostrzyca_Proboszczowicka.jpg/800px-Ostrzyca_Proboszczowicka.jpg",
+        desc: "Ostrzyca Proboszczowska to wyjątkowy szczyt w Pogórzu Kaczawskim, bazaltowy stożek wulkaniczny wznoszący się nagle spośród płaskiej równiny na 501 m n.p.m. Kształtem przypomina miniaturowy Matterhorn, co przysporzyło jej przydomka śląskiego Matterhornu. Jest najwyższym szczytem Pogórza Kaczawskiego i punktem Korony Sudetów Polskich PTTK (Oddział Wałbrzych). Na szczycie stoi stary punkt triangulacyjny i krzyż, a widok obejmuje całą Nizinę Śląską. Szlak na szczyt jest krótki, ale stromy." },
+      { name: "Szczeliniec Wielki (919 m)", short: "Najwyższy szczyt Gór Stołowych",
+        km: 46, time: "39 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Szczeliniec_Wielki.jpg/800px-Szczeliniec_Wielki.jpg",
+        desc: "Szczeliniec Wielki to najwyższy szczyt Gór Stołowych (919 m n.p.m.) i jeden z najbardziej spektakularnych punktów widokowych w Sudetach. Masyw zbudowany z piaskowca tworzy pionowe ściany opadające w dolinę, a na płaskim grzbiecie rozciąga się labirynt wąskich szczelin i formacji skalnych z fantastycznymi nazwami. Na szczycie stoi schronisko z tarasem widokowym oferującym panoramę na Kotlinę Kłodzką i Sudety Środkowe. Wejście stromymi schodami wybitymi w skale jest dostępne dla wszystkich, choć wymaga sprawności. To jeden z 22 szczytów Korony Sudetów PTTK." },
+      { name: "Kowadło (989 m)", short: "Góry Złote, skałki, malownicze szczyty",
+        km: 62, time: "54 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Kowad%C5%82o_Zl_Gory.jpg/800px-Kowad%C5%82o_Zl_Gory.jpg",
+        desc: "Kowadło to jeden z czołowych szczytów Gór Złotych (989 m n.p.m.), grupy górskiej na pograniczu polsko-czeskim w Sudetach Wschodnich. Charakterystyczne skałki na szczycie tworzą malowniczą sylwetkę, a widok obejmuje Masyw Śnieżnika i Kotlinę Kłodzką. Góry Złote to region mało znany i rzadko odwiedzany, co czyni wycieczki tu wyjątkowo atrakcyjnymi dla szukających spokoju. W pobliżu znajduje się słynna Jaskinia Radochowska i Kopalnia Złota w Złotym Stoku. Szlak na Kowadło można łączyć z wędrówką przez całe pasmo Gór Złotych." },
+      { name: "Trójmorski Wierch (1145 m)", short: "Zlewnia trzech mórz, Masyw Śnieżnika",
+        km: 79, time: "1 godz 8 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/Trojmorski_Wierch.jpg/800px-Trojmorski_Wierch.jpg",
+        desc: "Trójmorski Wierch (1145 m n.p.m.) to jeden z najciekawszych geograficznie szczytów w Masywie Śnieżnika — z jego wierzchołka wody spływają do trzech różnych mórz: Bałtyckiego, Czarnego i Północnego. Ten wyjątkowy trójdział wodny czyni go miejscem wyjątkowym w skali Europy. Szczyt leży w Koronie Sudetów Polskich, a szlak prowadzi przez gęste lasy i połoniny z widokami na Śnieżnik i Góry Bialskie. W pobliżu szczytu ustawiono tablicę informacyjną o fenomenie trójmorza. To obowiązkowy punkt dla każdego miłośnika ciekawostek geograficznych." },
+      { name: "Muflon / Rudawiec (1106 m)", short: "Góry Bystrzyckie, punkt Korony Sudetów",
+        km: 56, time: "48 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Rudawiec_Bystr.jpg/800px-Rudawiec_Bystr.jpg",
+        desc: "Rudawiec to najwyższy szczyt Gór Bystrzyckich (1106 m n.p.m.) i punkt Korony Sudetów Polskich. Masyw Gór Bystrzyckich rozciąga się wzdłuż granicy z Czechami na południe od Kotliny Kłodzkiej. Trasy na szczyt prowadzą przez rozległe łąki i połoniny z widokami na Kotlinę Kłodzką i Góry Stołowe. W pobliżu szczytu warto odwiedzić rezerwat przyrody chroniący unikalne gatunki roślinności subalpejskiej. Okolice Rudawca to raj dla miłośników spokojnej turystyki daleko od tłumów." },
+    ]
+  },
+  {
+    cat: "🪨 Skały, przełomy, formacje",
+    items: [
+      { name: "Adršpach-Teplice (CZ)", short: "Labirynt skał piaskowcowych tuż za granicą",
+        km: 52, time: "44 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Adersbach_2010.jpg/800px-Adersbach_2010.jpg",
+        desc: "Adršpach-Teplice to jeden z największych skalnych labiryntów w Europie Środkowej, położony w Czechach tuż za polską granicą. Tysiące piaskowcowych iglic, wąwozy i wąskie przejścia tworzą surrealistyczny świat, jakby wyjęty z bajki. Można tu zwiedzać dwa osobne obszary — bardziej dzikie Adršpachy i bardziej romantyczne Teplické Skály z jeziorkiem. Szlak wiedzie przez wąskie szczeliny, drabinki i pomosty, a całość zajmuje 2–4 godziny. To jedno z najchętniej odwiedzanych miejsc na czeskim Dolnym Śląsku." },
+      { name: "Błędne Skały", short: "Skalny labirynt w Górach Stołowych",
+        km: 45, time: "38 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/B%C5%82%C4%99dne_Ska%C5%82y.jpg/800px-B%C5%82%C4%99dne_Ska%C5%82y.jpg",
+        desc: "Błędne Skały to jeden z najbardziej znanych labiryntów skalnych w Polsce, leżący na terenie Parku Narodowego Gór Stołowych. Gigantyczne piaskowcowe bloki powywracane przez erozję tworzą ciasne przejścia, w których łatwo się zgubić — stąd nazwa. Szlak przez Błędne Skały liczy kilkaset metrów i prowadzi po drabinkach i schodkach, przez szczeliny tak wąskie, że dorośli muszą się przez nie przeciskać. Formacja jest czynna sezonowo, a liczba wejść jest limitowana przez park narodowy. To obowiązkowy punkt podczas wizyty w Górach Stołowych." },
+      { name: "Skalne Grzyby k. Lwówka Śląskiego", short: "Fantastyczne erozyjne kształty",
+        km: 110, time: "1 godz 34 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Skalne_grzyby_Lwowek.jpg/800px-Skalne_grzyby_Lwowek.jpg",
+        desc: "Skalne Grzyby koło Lwówka Śląskiego to rezerwat przyrody nieożywionej z wyjątkowymi erozyjnymi formacjami piaskowca. Skały wyglądają jak gigantyczne grzyby — z szerokimi kapeluszami balansującymi na cienkich trzonkach, ukształtowanymi przez miliony lat działania wody i wiatru. Rezerwat jest łatwo dostępny z drogi i nie wymaga długich wędrówek. Lwówek Śląski to urocze miasteczko z gotyckimi murami miejskimi, warte zwiedzenia przy okazji. To miejsce szczególnie fascynuje dzieci i miłośników geologii." },
+      { name: "Przełom Nysy Kłodzkiej (Piekło)", short: "Katarakty i skalne ściany, Bardo",
+        km: 37, time: "32 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bardo_Slaskie.jpg/800px-Bardo_Slaskie.jpg",
+        desc: "Przełom Nysy Kłodzkiej zwany Piekłem to jeden z najbardziej malowniczych przełomów rzecznych w Sudetach, gdzie rzeka przebija się przez skalne ściany koło Barda Śląskiego. Ściany wąwozu dochodzą do kilkudziesięciu metrów wysokości, a ścieżka nadrzeczna prowadzi przez naturalne arkady i groty skalne. Wiosną przełom szczególnie imponuje, gdy wody są wezbrany i tworzą małe katarakty. Bardo Śląskie jest jednocześnie ważnym centrum pielgrzymkowym ze słynnym sanktuarium Matki Bożej. Okolice nadają się na rafting i spływy kajakowe." },
+      { name: "Skały Piekielne w Sokolcu", short: "Bazaltowe baszty, Góry Sowie",
+        km: 18, time: "15 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Piekielne_Skaly.jpg/800px-Piekielne_Skaly.jpg",
+        desc: "Skały Piekielne w Sokolcu to imponujące bazaltowe formacje skalne w Górach Sowie, niedaleko Dzierżoniowa. Pionowe baszty i kolumny bazaltu tworzą naturalną cytadelę z widokiem na Kotlinę Dzierżoniowską i Góry Sowie. Formacja ma charakter wulkaniczny i należy do najciekawszych geologicznie obiektów w regionie. Dojście szlakiem ze wsi Sokolec zajmuje ok. 30 minut, a sam rezerwat można obejść w godzinę. To doskonałe miejsce na krótką wycieczkę z Dzierżoniowa lub Iwin." },
+      { name: "Organy Wielisławskie", short: "Słupowe formacje bazaltowe, Pogórze Kaczawskie",
+        km: 66, time: "56 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Organy_wielislawskie.jpg/800px-Organy_wielislawskie.jpg",
+        desc: "Organy Wielisławskie to spektakularne słupowe formacje bazaltowe koło Złotoryi, przypominające gigantyczne piszczałki organowe. Pionowe bazaltowe kolumny o regularnym, sześciokątnym przekroju powstały z wolno stygnącej lawy wulkanicznej miliony lat temu. Formacja wznosi się kilkanaście metrów ponad otaczające wzgórze i jest jedną z najpiękniejszych kolumnady bazaltowych w Polsce. Rezerwat jest łatwo dostępny i można go zwiedzić w ciągu godziny. Warto połączyć wizytę ze zwiedzaniem Złotoryi — najstarszego miasta w Polsce." },
+      { name: "Żaltman (739 m / Žaltman)", short: "Skałki piaskowcowe, Góry Jastrzębie (CZ)",
+        km: 55, time: "47 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/%C5%BDaltman.jpg/800px-%C5%BDaltman.jpg",
+        desc: "Żaltman (Žaltman) to najwyższy szczyt Gór Jastrzębia (Jestřebí hory) w Czechach, jeden z 22 szczytów Korony Sudetów PTTK. Na wierzchołku stoi wieża widokowa, z której roztacza się panorama na Góry Stołowe, Karkonosze i Adršpach po stronie czeskiej. Szczyt jest popularny wśród polskich turystów, bo leży tuż za granicą i można tu trafić ścieżkami z okolic Kudowy-Zdroju. Na szczycie zachowały się resztki piaskowcowych skałek tworzących urocze formacje. To przyjemna, niezbyt wymagająca wycieczka z widokami nagradzającymi wysiłek." },
+      { name: "Nonnenfelsen / Oybin (CZ/DE)", short: "Ruiny klasztoru na skalnej grani",
+        km: 160, time: "2 godz 18 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Oybin_castle_and_monastery.jpg/800px-Oybin_castle_and_monastery.jpg",
+        desc: "Oybin to wyjątkowe miejsce w Górach Łużyckich (Niemcy), gdzie na skalnym grzbiecie wznoszą się romantyczne ruiny gotyckiego zamku i klasztoru celestynów z XIV wieku. Wąskie ścieżki i wydrążone w skale komnaty tworzą niezwykły klimat, utrwalony przez malarzy epoki romantyzmu, w tym Caspara Davida Friedricha. Ze skał roztacza się panorama na pogranicze polsko-czesko-niemieckie, które tu można objąć jednym spojrzeniem. Wejście na skałę prowadzi stromymi drewnianymi schodami. To unikalne połączenie przyrody i historii, jedno z najbardziej nastrojowych miejsc w całym regionie." },
+      { name: "Kolorowe Jeziorka w Rudawach Janowickich", short: "Turkusowe i zielone jeziorka pokopalnianie",
+        km: 73, time: "1 godz 2 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Kolorowe_Jeziorka_Rudawy.jpg/800px-Kolorowe_Jeziorka_Rudawy.jpg",
+        desc: "Kolorowe Jeziorka w Rudawach Janowickich to niezwykłe zbiorniki wodne powstałe w wyrobiskach po kopalni uranu i minerałów, barwiące się w odcieniach turkusu, zieleni i błękitu od mineralnych substancji w wodzie. Trzy główne jeziorka — Błękitne, Zielone i Turkusowe — leżą w lesie i tworzą widok jak z egzotycznej wyspy. Dojście szlakiem z Janowic Wielkich zajmuje ok. 40 minut, a teren jest chroniony jako pomnik przyrody nieożywionej. Kąpiel jest zabroniona ze względu na toksyczne związki chemiczne w wodzie. To jedno z najbardziej fotografowanych miejsc w polskich Sudetach." },
+    ]
+  },
+  {
+    cat: "🕌 Kościoły i klasztory",
+    items: [
+      { name: "Kościoły Pokoju – Jawor i Świdnica", short: "UNESCO, największe drewniane kościoły Europy",
+        km: 53, time: "46 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Jawor_church_of_peace.jpg/800px-Jawor_church_of_peace.jpg",
+        desc: "Kościoły Pokoju w Jaworze i Świdnicy to wpisane na Listę Światowego Dziedzictwa UNESCO największe drewniane budowle sakralne w Europie, zbudowane na mocy pokoju westfalskiego w XVII wieku. Protestanci mogli je wznieść wyłącznie z nietrwałych materiałów — drewna, gliny i słomy — bez kamiennych fundamentów i wieży. Kościół w Świdnicy mieści ok. 7500 osób, a w Jaworze ok. 6000, co czyni je jednymi z największych kościołów protestanckich na świecie. Wnętrza zachwycają bogactwem polichromii, empor i snycerki, mimo materialnych ograniczeń. Obydwa kościoły są czynne i odbywają się w nich regularne nabożeństwa." },
+      { name: "Klasztor Cystersów w Henrykowie", short: "Pierwsze zdanie po polsku, UNESCO",
+        km: 46, time: "40 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Klasztor_Henrykow.jpg/800px-Klasztor_Henrykow.jpg",
+        desc: "Klasztor Cystersów w Henrykowie to romańsko-gotycka fundacja z XIII wieku, wpisana na Listę Światowego Dziedzictwa UNESCO jako element szlaku Zabytków Pisarskich. W klasztornej kronice z ok. 1270 roku zachowało się pierwsze zdanie w języku polskim: 'Daj ać ja pobruszę a ty poczywaj', zapisane przez mnicha dla ilustracji podziału ról małżeńskich. Kościół klasztorny zachował wspaniałe barokowe wyposażenie, w tym ołtarze i stalle. Cystersi zamieszkują klasztor do dziś i przyjmują gości. To obowiązkowe miejsce dla każdego miłośnika historii języka polskiego." },
+      { name: "Klasztor Cystersów w Krzeszowie", short: "Perła Baroku Śląskiego",
+        km: 55, time: "47 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Krzeszow_klasztor.jpg/800px-Krzeszow_klasztor.jpg",
+        desc: "Klasztor w Krzeszowie zwany Perłą Baroku Śląskiego to jeden z najpiękniejszych zespołów barokowych w Europie Środkowej. Budowany przez cystersów od XVII wieku, zachwycił całe pokolenia architektów i historyków sztuki swoją monumentalnością i finezją detali. Kościół pw. Wniebowzięcia NMP skrywa relikwie błogosławionych Bernarda i Jadwigi, czczone tu od wieków. Szczególnie piękna jest kaplica grobowa Piastów świdnicko-jaworskich z gotyckimi sarkofagami. Klasztor wciąż jest czynny i zamieszkany przez benedyktynki." },
+      { name: "Kościół Wniebowzięcia NMP w Byczynie", short: "Gotyk, dobrze zachowane mury obronne",
+        km: 170, time: "2 godz 27 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Byczyna_ratusz.jpg/800px-Byczyna_ratusz.jpg",
+        desc: "Byczyna to jedno z najlepiej zachowanych miast warownych w Polsce, otoczone niemal kompletnym pierścieniem średniowiecznych murów z basztami i bramami. Gotycki kościół pw. Wniebowzięcia NMP dominuje nad rynkiem otoczonym zabytkową zabudową. Miasto słynie jako miejsce bitwy pod Byczyną z 1601 roku, podczas której Zamoyski pojmał arcyksięcia Maksymiliana Habsburga. Spacer po murach i wieżach obronnych to niezapomniane przeżycie dla miłośników średniowiecza. Byczyna leży wprawdzie w województwie opolskim, ale często jest włączana w programy wycieczek po Dolnym Śląsku." },
+      { name: "Bazylika w Bardzie Śląskim", short: "Sanktuarium Matki Bożej Bardzkiej",
+        km: 37, time: "32 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Bardo_Slaskie_bazylika.jpg/800px-Bardo_Slaskie_bazylika.jpg",
+        desc: "Bazylika Nawiedzenia NMP w Bardzie Śląskim to jedno z najważniejszych sanktuariów maryjnych na Dolnym Śląsku, związane z cudowną figurką Matki Bożej Bardzkiej. Kościół barokowy z XVIII wieku stoi na miejscu wcześniejszych świątyń, a tradycja pielgrzymkowa sięga tu ponad 700 lat. Wnętrze bazyliki zachwyca bogatymi stiukami, freskami i barokowymi ołtarzami. Bardo Śląskie leży w malowniczym przełomie Nysy Kłodzkiej, co czyni okolicę wyjątkowo atrakcyjną turystycznie. Sanktuarium odwiedzają rocznie tysiące pielgrzymów z całej Polski." },
+      { name: "Klasztor Franciszkanów Wrocław", short: "Gotyk, sarkofagi Piastów",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Wroclaw_franciszkanie.jpg/800px-Wroclaw_franciszkanie.jpg",
+        desc: "Klasztor Franciszkanów we Wrocławiu to jeden z najstarszych gotyckich kościołów w mieście, mieszczący sarkofagi Piastów śląskich z XIII i XIV wieku. Kościół pw. Wniebowzięcia NMP zachował piękne gotyckie detale architektoniczne i cenną rzeźbę nagrobną. Zakon franciszkanów działał tu nieprzerwanie od XIII wieku i wciąż prowadzi klasztor. Wnętrze skrywa liczne tablice epitafijne i zabytki sztuki sakralnej. To ważne miejsce kultu i jeden z mniej tłocznych zabytkowych kościołów w centrum Wrocławia." },
+      { name: "Klasztor w Lubiążu", short: "Największy klasztor cysterski na świecie",
+        km: 100, time: "1 godz 25 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Lubiaz-klasztor.jpg/800px-Lubiaz-klasztor.jpg",
+        desc: "Klasztor w Lubiążu to jeden z największych i najdłuższych budynków sakralnych w Europie — jego fasada frontowa mierzy aż 223 metry. Cystersi wznieśli go w obecnej formie barokowej w XVII-XVIII wieku na miejscu wcześniejszego opactwa z XII wieku. W czasach III Rzeszy klasztor był siedzibą instytutu rasowego SS, a po wojnie składnicą muzealną i ochronką zdrowotną. Dziś trwa powolna restauracja tego zabytkowego kompleksu przez fundację. Wnętrza kościoła klasztornego z monumentalnymi freskami robią niesamowite wrażenie." },
+    ]
+  },
+  {
+    cat: "🏛️ Wrocław – must see",
+    items: [
+      { name: "Ostrów Tumski", short: "Najstarsza część Wrocławia, katedra gotycka",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Ostrow_Tumski_Wroclaw.jpg/800px-Ostrow_Tumski_Wroclaw.jpg",
+        desc: "Ostrów Tumski to historyczne serce Wrocławia — wyspa na Odrze, gdzie miasto zrodziło się ponad tysiąc lat temu. Dominuje tu gotycka katedra pw. Jana Chrzciciela z XIV-XV wieku z dwiema charakterystycznymi wieżami i platformą widokową. Wieczorami Ostrów Tumski jako jedyna część Wrocławia jest oświetlana gazowymi latarniami — latarnik co dzień je zapala ręcznie. Plac Katedralny i otaczające go kościoły, pałace i kolegiaty tworzą jeden z najpiękniejszych historycznych zespołów urbanistycznych w Polsce. To obowiązkowy punkt każdej wizyty we Wrocławiu." },
+      { name: "Rynek Wrocław + Ratusz", short: "Jeden z największych rynków w Polsce",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Wroclaw_rynek.jpg/800px-Wroclaw_rynek.jpg",
+        desc: "Wrocławski Rynek jest jednym z największych rynków średniowiecznych w Polsce (213×178 m) i od stuleci centrum życia miasta. Stojący pośrodku Ratusz z przełomu XIV-XVI wieku należy do najpiękniejszych gotyckich budowli świeckich w Europie Środkowej — jego dekoracyjna wschodnia elewacja jest prawdziwym arcydziełem kamieniarskim. Dookoła rynku stoją barokowe i klasycystyczne kamieniczki, restauracje i kawiarnie. W podziemiach Ratusza mieści się Muzeum Sztuki Mieszczańskiej. Rynek jest sercem miejskiego życia przez cały rok — od jarmarku bożonarodzeniowego po letnie festiwale." },
+      { name: "Panorama Racławicka", short: "Monumentalna panorama bitwy 1794 r.",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Panorama_raclawicka.jpg/800px-Panorama_raclawicka.jpg",
+        desc: "Panorama Racławicka to jedno z największych dzieł malarskich w Polsce — olbrzymie cylindryczne płótno o wymiarach 15×120 metrów, przedstawiające bitwę pod Racławicami z 1794 roku. Namalowana we Lwowie w 1894 roku przez Jana Stykę i Wojciecha Kossaka, trafiła do Wrocławia po II wojnie światowej. Widz stoi w centrum okrągłej rotundy otoczony panoramicznym obrazem z trójwymiarowym pierwszym planem, co tworzy poczucie uczestnictwa w batalii. Panorama jest eksponowana w specjalnie dla niej zaprojektowanej rotundzie przy pl. Jana Pawła II. Odwiedziny wymagają wcześniejszej rezerwacji i biletów." },
+      { name: "Hala Stulecia (Hala Ludowa)", short: "UNESCO, arcydzieło modernizmu Maxa Berga",
+        km: 71, time: "1 godz 1 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Hala_Stulecia_Wroclaw.jpg/800px-Hala_Stulecia_Wroclaw.jpg",
+        desc: "Hala Stulecia (dawna Hala Ludowa) to wyjątkowe dzieło architektury modernistycznej zaprojektowane przez Maxa Berga i zbudowane w 1913 roku z okazji stulecia zwycięstwa nad Napoleonem. Olbrzymia kopuła żelbetowa o średnicy 65 metrów była w momencie budowy największą na świecie i pozostaje jednym z symboli nowoczesnej architektury XX wieku. W 2006 roku Hala została wpisana na Listę Światowego Dziedzictwa UNESCO. Wewnątrz odbywają się koncerty, targi i mecze, a otaczający ją Ogród Japoński i fontanna multimedialna tworzą atrakcyjny kompleks. To obowiązkowy punkt na mapie Wrocławia dla miłośników architektury." },
+      { name: "ZOO Wrocław + Afrykarium", short: "Jedno z najlepszych zoo w Europie",
+        km: 71, time: "1 godz 1 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Wroclaw_zoo.jpg/800px-Wroclaw_zoo.jpg",
+        desc: "Wrocławskie ZOO to jedno z najstarszych i największych ogrodów zoologicznych w Polsce, założone w 1865 roku. Uzupełnia je wyjątkowe Afrykarium — pierwsze w Polsce i jedno z pierwszych w Europie pawilony poświęcone środowisku wodnemu Afryki z żywymi morświnami, mantagami i tropikalnymi rybami. Zoo liczy ponad 10 000 zwierząt reprezentujących ponad 1100 gatunków, a rocznie odwiedza je kilka milionów gości. Dla rodzin z dziećmi to jeden z najlepszych celów wypadu w region. Na pełne zwiedzanie warto zarezerwować cały dzień." },
+      { name: "Muzeum Narodowe Wrocław", short: "Największa kolekcja sztuki śląskiej",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Muzeum_Narodowe_Wroclaw.jpg/800px-Muzeum_Narodowe_Wroclaw.jpg",
+        desc: "Muzeum Narodowe we Wrocławiu to jedno z największych muzeów w Polsce, z bogatą kolekcją sztuki śląskiej od średniowiecza do XX wieku. Szczególnie cenne są zbiory rzeźby romańskiej i gotyckiej, w tym tympanon z Ołbina — arcydzieło romańskiego rzeźbiarstwa. Muzeum przechowuje ponad 230 000 dzieł sztuki, a stała ekspozycja zajmuje kilkadziesiąt sal. Obok sztuki śląskiej można podziwiać europejskie malarstwo od renesansu do modernizmu. To obowiązkowe miejsce dla każdego miłośnika historii sztuki i kultury regionu." },
+      { name: "Hydropolis Wrocław", short: "Interaktywne centrum wiedzy o wodzie",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Hydropolis_Wroclaw.jpg/800px-Hydropolis_Wroclaw.jpg",
+        desc: "Hydropolis to wyjątkowe centrum nauki poświęcone wodzie, ulokowane w zabytkowym podziemnym zbiorniku wody pitnej z XIX wieku. Nowoczesna, interaktywna ekspozycja na 4 000 m² opowiada o wodzie jako źródle życia, jej obiegach, historii cywilizacji nad rzekami i współczesnym zarządzaniu zasobami. Efekty specjalne, hologramy i instalacje multimedialne czynią wizytę niezapomnianą dla dzieci i dorosłych. Samo wnętrze dawnego zbiornika — ogromne sklepione komnaty — robi niesamowite wrażenie architektoniczne. Warto zarezerwować bilet wcześniej, bo Hydropolis jest bardzo popularne." },
+      { name: "Wyspy na Odrze + mosty Wrocławia", short: "Mostek Tumski, wyspy i klimat kanałów",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Wroclaw_Tumski_Bridge.jpg/800px-Wroclaw_Tumski_Bridge.jpg",
+        desc: "Wrocław leży na 12 wyspach i ma ponad 100 mostów, co nadaje mu unikatowy klimat porównywalny z Wenecją czy Amsterdamem. Słynny Mostek Tumski — żeliwna kładka z XIX wieku — jest ozdobionym tysiącami kłódek symbolem miłości, jednym z najbardziej romantycznych miejsc w mieście. Spacer Wyspą Piaskową, z gotyckim kościołem NMP na Piasku, i Wyspą Słodową to ulubiony odpoczynek wrocławian. Kanały Odry o zachodzie słońca tworzą niezapomniane widoki. Rowerowa objazdówka wyspami i mostami to jeden z najlepszych sposobów na poznanie Wrocławia." },
+      { name: "Taras widokowy SKY Tower", short: "Najwyższy taras widokowy w Polsce",
+        km: 66, time: "57 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Sky_Tower_Wroclaw.jpg/800px-Sky_Tower_Wroclaw.jpg",
+        desc: "SKY Tower to najwyższy budynek w Polsce poza Warszawą (212 m), stojący przy ul. Powstańców Śląskich we Wrocławiu. Na 49. piętrze mieści się taras widokowy SkyHigh, skąd przy dobrej pogodzie widać Karkonosze, Góry Sowie i całą panoramę Wrocławia. Nowoczesna winda ze szklanymi ścianami wiezie na górę w kilkanaście sekund, a na samym tarasie można skorzystać z tablic informacyjnych i wykonać wyjątkowe zdjęcia. W budynku mieści się centrum handlowe, apartamenty i biura. Dla miłośników widoków i architektury współczesnej obowiązkowy punkt programu." },
+    ]
+  },
+  {
+    cat: "⛏️ Podziemia i kopalnie",
+    items: [
+      { name: "Kopalnia Uranu Kletno", short: "Jedyna taka w Polsce, Masyw Śnieżnika",
+        km: 73, time: "1 godz 2 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Kopalnia_uranu_kletno.jpg/800px-Kopalnia_uranu_kletno.jpg",
+        desc: "Kopalnia Uranu w Kletnie to jedyna udostępniona do zwiedzania kopalnia uranu w Polsce, wydobywanego tu w latach 1948–1953 na potrzeby radzieckich bomb atomowych. Udostępnione do zwiedzania tunele liczą ponad 600 metrów długości i skrywają liczne okazy minerałów fluorescencyjnych — w świetle UV jarzy się niezwykłymi kolorami. Temperatura w podziemiach wynosi stale ok. 8°C, niezależnie od pory roku. Przewodnicy opowiadają dramatyczne losy górników pracujących bez ochrony w napromieniowanych tunelach. To jedno z najbardziej niezwykłych podziemnych miejsc w Polsce, często łączone z wizytą w pobliskiej Jaskini Niedźwiedziej." },
+      { name: "Jaskinia Niedźwiedzia w Kletnie", short: "Kości jaskiniowych niedźwiedzi, stalagmity",
+        km: 72, time: "1 godz 2 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Jaskinia_Niedzwiedzia_Kletno.jpg/800px-Jaskinia_Niedzwiedzia_Kletno.jpg",
+        desc: "Jaskinia Niedźwiedzia w Kletnie to jedna z najpiękniejszych jaskiń krasowych w Polsce, odkryta przypadkowo w 1966 roku podczas prac wydobywczych w kamieniołomie. Wnętrze jaskini zachwyca bogatą szatą naciekową — stalagmitami, stalaktytami i naciekami o niezwykłych kształtach — tworzoną przez setki tysięcy lat. Odkryto tu kości jaskiniowych niedźwiedzi, lwów i innych plejstoceńskich ssaków. Trasa turystyczna liczy ok. 270 metrów i jest obowiązkowo z przewodnikiem, a temperatura w środku to stałe 6°C. Wizytę warto połączyć z pobliską Kopalnią Uranu i wodospadami Kleśnicy." },
+      { name: "Jaskinia Radochowska", short: "Korytarze krasowe w Górach Złotych",
+        km: 69, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Jaskinia_Radochowska.jpg/800px-Jaskinia_Radochowska.jpg",
+        desc: "Jaskinia Radochowska w Górach Złotych to jedna z nielicznych udostępnionych do zwiedzania jaskiń w Sudetach Wschodnich, rozwinięta w marmurach i wapiennych skałach. Trasa turystyczna prowadzi przez kilkaset metrów sali i korytarzy z ciekawą szatą naciekową. Charakterystyczne dla tej jaskini są duże, wydrążone komnaty i labiryntowe rozgałęzienia tuneli. Jaskinia leży w okolicach Lądka-Zdroju, co pozwala połączyć wizytę z wizytą w uzdrowisku. Nie jest tak spektakularna jak Jaskinia Niedźwiedzia, ale oferuje autentyczną atmosferę podziemnej eksploracji." },
+      { name: "Sztolnie Walimskie – Osówka", short: "Podziemia projektu Riese, Góry Sowie",
+        km: 25, time: "22 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Osowka_sztolnie.jpg/800px-Osowka_sztolnie.jpg",
+        desc: "Osówka to jeden z kilku kompleksów podziemnych tuneli wykutych przez Niemców w ramach tajemniczego projektu Riese w Górach Sowich podczas II wojny światowej, przy użyciu siły roboczej więźniów obozów koncentracyjnych. Kilometry korytarzy wykutych w granicie Gór Sowich fascynują i przerażają jednocześnie — do dziś nie wiadomo, do czego ostatecznie miały służyć. Udostępniona trasa turystyczna liczy ponad 1,5 km i wiedzie przez sale, tunele i szyby wentylacyjne. Temperatura w podziemiach wynosi ok. 8°C przez cały rok. To jeden z najbardziej tajemniczych i popularnych kompleksów militarnych w Polsce." },
+      { name: "Kopalnia Złota w Złotym Stoku", short: "Historyczna kopalnia, podziemna rzeka",
+        km: 49, time: "42 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Zloty_Stok_kopalnia.jpg/800px-Zloty_Stok_kopalnia.jpg",
+        desc: "Kopalnia Złota w Złotym Stoku to najstarsze i największe tego typu muzeum górnicze w Polsce, otwarte w podziemiach historycznej kopalni złota i arsenu czynnej przez ponad 700 lat. Podziemna trasa turystyczna liczy blisko 2 km i obejmuje spektakularny wodospad pod ziemią oraz rejs łódką podziemną rzeką. Ekspozycja opowiada o technikach wydobycia i historii górnictwa od średniowiecza po XX wiek. Na powierzchni znajduje się skansen i prasa do bicia monet, gdzie można wycisnąć pamiątkową monetę. To jedno z najpopularniejszych miejsc na Ziemi Kłodzkiej dla całych rodzin." },
+      { name: "Sztolnia Czarnego Pstrąga", short: "UNESCO, zabytkowa kopalnia srebra, Tarnowskie Góry",
+        km: 110, time: "1 godz 35 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Kopalnia_srebra_tarnowskie_gory.jpg/800px-Kopalnia_srebra_tarnowskie_gory.jpg",
+        desc: "Sztolnia Czarnego Pstrąga w Tarnowskich Górach to część wpisanego na Listę UNESCO kompleksu zabytkowej kopalni srebra, ołowiu i cynku czynnej od XVI do XX wieku. Trasa obejmuje spływ łódką przez zalane tunele kopalniane, co jest jednym z najbardziej niezwykłych doświadczeń turystycznych w Polsce. Sztolnia ma blisko 600 metrów długości i imponuje skalą inżynierskich systemów odwadniania i wentylacji. Wpis na Listę UNESCO podkreśla wyjątkową wartość historyczną i techniczną obiektu. Warto zarezerwować bilety z dużym wyprzedzeniem — to jedno z najbardziej obleganych podziemi w Polsce." },
+      { name: "Podziemne Miasto Włodarz", short: "Kompleks RIESE, największy obiekt projektu",
+        km: 22, time: "18 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Wlodarz_Riese.jpg/800px-Wlodarz_Riese.jpg",
+        desc: "Włodarz to największy z kompleksów podziemnych projektu Riese w Górach Sowich, wykuty przez Niemców w czasie II wojny światowej przy użyciu więźniów obozów pracy. Sieć kilkukilometrowych tuneli, sal i szyb kryje się pod szczytem Włodarz (743 m n.p.m.), a zwiedzanie odbywa się trasą turystyczną z przewodnikiem lub samodzielnie. Otacza ją tajemnica — historycy do dziś spekulują, czy był to bunkier Hitlera, zakład zbrojeniowy czy coś zupełnie innego. Temperatura wewnątrz to stałe 8°C niezależnie od pory roku. Włodarz leży kilka minut od Iwin — to najprzystępniejsza atrakcja w pobliżu." },
+      { name: "Kopalnia Miedzi KGHM Lubin", short: "Wycieczki do czynnej kopalni miedzi",
+        km: 85, time: "1 godz 13 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/KGHM_Lubin.jpg/800px-KGHM_Lubin.jpg",
+        desc: "KGHM Lubin to polska korporacja będąca jednym z największych producentów miedzi i srebra na świecie, a jej kopalnie w okolicach Lubina i Głogowa są otwarte dla grup zorganizowanych na specjalnych wycieczkach. Zjazd kilkusetmetrowym szybem do podziemi czynnej kopalni to niesamowite przeżycie, pokazujące skalę przemysłowego wydobycia. Zwiedzanie obejmuje prawdziwe chodniki, maszyny górnicze i pokaz wzbogacania rudy. To unikalna możliwość zobaczenia czynnej kopalni od środka, dostępna przez centrum edukacyjne KGHM. Wycieczki wymagają wcześniejszej rezerwacji." },
+    ]
+  },
+  {
+    cat: "🏞️ Parki i przyroda",
+    items: [
+      { name: "Karkonoski Park Narodowy", short: "Torfowiska, wodospady, widoki",
+        km: 85, time: "1 godz 12 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Karkonoski_Park_Narodowy.jpg/800px-Karkonoski_Park_Narodowy.jpg",
+        desc: "Karkonoski Park Narodowy to jeden z najstarszych i najsłynniejszych parków narodowych w Polsce, chroniący unikatowe ekosystemy najwyższych Sudetów. Torfowiska subalpejskie, stawy polodowcowe (Małe i Wielkie Stawki), wodospady i niezwykłe formacje skalne tworzą krajobraz rodem z baśni. Wiosną Kotlina Jeleniogórska słynie z krokusów pokrywających łąki, jesienią kolory borówek i trawy tworzą złocisto-czerwone dywany na grzbietach. Przez park prowadzą trasy dla piechurów, rowerzystów i biegaczy, w tym słynna Droga Jubileuszowa. Centrum Edukacji Ekologicznej w Jeleniej Górze uzupełnia wiedzę o przyrodzie regionu." },
+      { name: "Park Narodowy Gór Stołowych", short: "Płaskowyże, labirynty, Szczeliniec",
+        km: 45, time: "38 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Gory_Stolowe_park.jpg/800px-Gory_Stolowe_park.jpg",
+        desc: "Park Narodowy Gór Stołowych to jedyny w Polsce park obejmujący góry o budowie płytowej — poziome ławice piaskowca tworzą płaskowyże z pionowymi ścianami opadającymi w dolinę. Główne atrakcje to Szczeliniec Wielki ze skalnym labiryntem i panoramą oraz Błędne Skały z ciasną siecią szczelin i tuneli. Park jest mały, ale niezwykle zwarty i bogaty — można go zwiedzić w jeden intensywny dzień lub na spokojnie przez weekend. Schronisko na Szczelińcu to jedna z najstarszych górskich baz turystycznych w Polsce. Park sąsiaduje z czeskim Adrszpachem, tworząc transgraniczną atrakcję." },
+      { name: "Dolina Baryczy – rezerwat ptaków", short: "Największy kompleks stawów rybnych w PL",
+        km: 80, time: "1 godz 8 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Dolina_Baryczy.jpg/800px-Dolina_Baryczy.jpg",
+        desc: "Dolina Baryczy to obszar chroniony obejmujący największy kompleks stawów rybnych w Polsce, prowadzonych przez wiele wieków jako gospodarka karpiowa. Tysiące hektarów stawów, łąk i lasów tworzą siedlisko dla ponad 300 gatunków ptaków, w tym bociana czarnego, żurawia i wielu gatunków kaczek i gęsi. Europejski rezerwat biosfery UNESCO chroni unikatowy krajobraz kulturowy starej hodowli ryb śląskiej. Szlak rowerowy przez Dolinę Baryczy liczy ponad 200 km i prowadzi przez Milicz, Żmigród i liczne rezerwaty. To raj dla ornitologów, fotografów przyrody i miłośników spokojnej turystyki." },
+      { name: "Bory Dolnośląskie", short: "Rozległy kompleks leśny, żurawie",
+        km: 100, time: "1 godz 25 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Bory_Dolnoslaskie.jpg/800px-Bory_Dolnoslaskie.jpg",
+        desc: "Bory Dolnośląskie to jeden z największych kompleksów leśnych w Polsce — ponad 160 000 hektarów borów sosnowych na sandurze polodowcowym. Niemal pusta równina przecięta rzeką Kwisą i Czarną Wodą jest domem dla żurawi, wilków, rysi i żółwi błotnych. Jesienią i wiosną przeloty żurawi nad borami to jedno z największych widowisk przyrodniczych w Polsce. Przez lasy prowadzą szlaki rowerowe i piesze, a liczne jeziora polanki zapraszają do odpoczynku. Bory kryją też ślady II wojny światowej — lotniska, bunkry i poligony wojskowe." },
+      { name: "Wodospad Kamieńczyka", short: "Najwyższy wodospad w polskich Sudetach",
+        km: 97, time: "1 godz 23 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Wodospad_Kamienczyk.jpg/800px-Wodospad_Kamienczyk.jpg",
+        desc: "Wodospad Kamieńczyka w Szklarskiej Porębie to najwyższy wodospad w polskiej części Sudetów, skaczący z progów granitowych na łączną wysokość 27 metrów. Jasny, pienisty potok ciśnie się przez wąskie skalne koryto i tworzy mglistą chmurę wody, zimą zamieniającą się w lodospady. Dojście od centrum Szklarskiej Poręby zajmuje ok. 45 minut atrakcyjną trasą wzdłuż rzeki. W pobliżu leży mniejszy, ale piękny Wodospad Szklarki (13 m). Okolica jest jednym z najchętniej odwiedzanych rejonów turystycznych Karkonoszy." },
+      { name: "Wodospad Szklarki", short: "Piękny wodospad w Karkonoszach",
+        km: 95, time: "1 godz 21 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Wodospad_Szklarki.jpg/800px-Wodospad_Szklarki.jpg",
+        desc: "Wodospad Szklarki to malowniczy wodospad na rzece Szklarce w Szklarskiej Porębie, skaczący z granitu na wysokość 13 metrów. Otoczony jest gęstym lasem bukowym i świerkowym, a do wodospadu prowadzi przyjemna, krótka ścieżka (ok. 20 minut z centrum). Zimą wodospad częściowo zamarza, tworząc spektakularny lodospad. Dzięki bliskości centrum i krótkiej trasie dostępowej jest jedną z najłatwiej dostępnych naturalnych atrakcji Karkonoszy. Szklarska Poręba to prężny ośrodek turystyczny z szeroką ofertą zimową i letnią." },
+      { name: "Jezioro Nyskie i Otmuchowskie", short: "Zbiorniki retencyjne, kąpieliska, sporty wodne",
+        km: 52, time: "44 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Jezioro_Nyskie.jpg/800px-Jezioro_Nyskie.jpg",
+        desc: "Jezioro Nyskie i Jezioro Otmuchowskie to sztuczne zbiorniki na rzece Nysa Kłodzka, stanowiące największy akwen Dolnego Śląska o łącznej powierzchni ponad 3000 ha. Latem oba jeziora tętnią życiem — plaże, wypożyczalnie kajaków, windsurfing, rejsy statkami wycieczkowym i kempingi nad samą wodą. Otmuchów to malownicze miasteczko z zamkiem biskupów wrocławskich z widokiem na Jezioro Otmuchowskie. Nysa, leżąca nad samym jeziorem, jest bogatą w zabytki i historię stolicą regionu. To doskonałe miejsce na letni wyjazd z dziećmi." },
+      { name: "Stawy Milickie", short: "Rezerwat biosfery UNESCO, ptaki wędrowne",
+        km: 90, time: "1 godz 17 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Stawy_Milickie.jpg/800px-Stawy_Milickie.jpg",
+        desc: "Stawy Milickie w Dolinie Baryczy to jeden z największych kompleksów stawów hodowlanych w Europie, od wieków prowadzonych przez cystersów, a dziś wpisanych na listę rezerwatów biosfery UNESCO. Tysiące hektarów stawów otoczonych lasami i łąkami tworzą raj dla ptaków — gniazduje tu ponad 180 gatunków, a jesienią zatrzymują się ogromne stada ptaków migrujących. Coroczny połów karpi w październiku to tradycyjne święto regionalne przyciągające turystów. Przez stawy poprowadzona jest sieć szlaków rowerowych i pieszych. Milicz to urokliwe miasteczko z bogatą tradycją rybacką." },
+    ]
+  },
+  {
+    cat: "🎡 Uzdrowiska i ciekawostki",
+    items: [
+      { name: "Kudowa-Zdrój – Czaszkownia (Kaplica Czaszek)", short: "Kaplica z 3000 ludzkich czaszek i kości",
+        km: 56, time: "48 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Czermna_Skull_Chapel.jpg/800px-Czermna_Skull_Chapel.jpg",
+        desc: "Kaplica Czaszek w Czermnej koło Kudowy-Zdroju to jedno z najbardziej niezwykłych miejsc na Dolnym Śląsku — XVIII-wieczna kaplica, której ściany i sufit wyłożone są ok. 3000 ludzkich czaszek i kości. Kości zebrał miejscowy proboszcz Tomasz Lossow od ofiar wojen, epidemii i głodu, a w podziemiach krypty spoczywają szczątki kolejnych kilkudziesięciu tysięcy osób. Miejsce budzi grozę, ale też skłania do refleksji na temat przemijania. Kudowa-Zdrój to urokliwe uzdrowisko z parkiem zdrojowym i pijalniami wód. Czaszkownia jest jedną z zaledwie trzech takich kaplic w Europie." },
+      { name: "Lądek-Zdrój", short: "Najstarsze uzdrowisko w Polsce, termy",
+        km: 62, time: "53 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Ladek_Zdroj.jpg/800px-Ladek_Zdroj.jpg",
+        desc: "Lądek-Zdrój to najstarsze uzdrowisko w Polsce, z tradycją leczniczą sięgającą XIV wieku, słynące z radoczynnych (słabo radioaktywnych) źródeł siarczkowych i fluorowych. Piękna secesyjna zabudowa centrum, stare łazienki termalne i park zdrojowy tworzą unikalną atmosferę kurortu z początku XX wieku. Sławę Lądkowi przyniosły pobyty Goethego, Fryderyka Wielkiego i wielu innych dostojnych gości. Okolice to świetna baza wypadowa do Masywu Śnieżnika i Gór Złotych. Lądek słynie też z Jaskini Radochowskiej i ciekawej starówki z dobrze zachowanym rynkiem." },
+      { name: "Polanica-Zdrój", short: "Pijalnia wód, termy i park zdrojowy",
+        km: 48, time: "41 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Polanica_Zdroj.jpg/800px-Polanica_Zdroj.jpg",
+        desc: "Polanica-Zdrój to eleganckie uzdrowisko w Kotlinie Kłodzkiej, słynące ze szczaw węglanowo-wapniowych i magnezowych. Park zdrojowy z pijalnią wód i secesyjnymi willami tworzy atmosferę Belle Époque. Latem odbywają się tu Festiwal Chopinowski i inne imprezy kulturalne, a termy Zdrój oferują nowoczesne baseny i spa. Okoliczne lasy i łąki zapraszają do spacerów i rowerowych wycieczek. Polanica to popularna baza wypadowa do Gór Stołowych i Kłodzka." },
+      { name: "Duszniki-Zdrój", short: "Muzeum Papiernictwa, festiwal Chopinowski",
+        km: 53, time: "45 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Duszniki-Zdroj.jpg/800px-Duszniki-Zdroj.jpg",
+        desc: "Duszniki-Zdrój to urokliwe uzdrowisko słynące z Muzeum Papiernictwa — zabytkowego papierni z XVII wieku z działającym kołem wodnym i ręczną produkcją papieru. Co roku w sierpniu odbywa się tu Międzynarodowy Festiwal Chopinowski — jeden z największych festiwali pianistycznych na świecie, kontynuujący tradycję wizyty 14-letniego Fryderyka Chopina w 1826 roku. Centrum uzdrowiskowe, zabytkowe wille i park zdrojowy tworzą wyśmienity klimat. Okolice Dusznik to znakomite tereny narciarskie zimą." },
+      { name: "Wambierzyce – Jerozolima Śląska", short: "Kalwaria, bazylika na skale, miasteczko pielgrzymkowe",
+        km: 41, time: "35 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Wambierzyce_bazylika.jpg/800px-Wambierzyce_bazylika.jpg",
+        desc: "Wambierzyce to śląska Jerozolima, wieś i centrum pielgrzymkowe skupione wokół monumentalnej bazyliki z cudowną figurką Matki Bożej. Teren wokół świątyni pokrywa gęsta sieć Dróżek Różańcowych — miniaturowych kaplic kalwaryjnych rozstawionych na wzgórzach. Sama bazylika zbudowana na skale imponuje majestatycznym wejściem ze 102 schodami. Cały układ przestrzenny jest naśladowaniem topografii Jerozolimy — stąd nazwa. Wambierzyce to jedno z najważniejszych śląskich sanktuariów, odwiedzane przez pielgrzymów z Polski i Czech." },
+      { name: "Złoty Stok – kopalnia i muzeum", short: "Kopalnia złota i arsenu, 700 lat historii",
+        km: 49, time: "42 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Zloty_Stok.jpg/800px-Zloty_Stok.jpg",
+        desc: "Złoty Stok to miasteczko ze 700-letnią tradycją wydobycia złota i arsenu, jedno z historycznych centrów górniczych Ziemi Kłodzkiej. Główna atrakcja to Kopalnia Złota z podziemną trasą i wodospadem, ale miasto samo w sobie kryje zabytki po bogatej historii: renesansowy ratusz, kościół z XV wieku i stare domy górnicze. Muzeum na terenie kopalni prezentuje techniki wydobycia od średniowiecza, a specjalny automat pozwala wybić własną pamiątkową monetę. Złoty Stok leży w Masywie Gór Złotych, co czyni okolicę atrakcyjną do dłuższego pobytu." },
+      { name: "Sudecka Zagroda Edukacyjna Dobków", short: "Kontakt ze zwierzętami, edukacja, Góry Kaczawskie",
+        km: 78, time: "1 godz 7 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Dobkow_zagroda.jpg/800px-Dobkow_zagroda.jpg",
+        desc: "Sudecka Zagroda Edukacyjna w Dobkowie to wyjątkowe miejsce w sercu Gór Kaczawskich, gdzie można nawiązać bliski kontakt z rzadkimi rasami zwierząt hodowlanych i dzikich ssaków. Zagroda prowadzi programy edukacyjne dla dzieci, pozwalając karmić zwierzęta i poznawać ich zwyczaje. Okolica Dobkowa słynie z pięknych krajobrazów i zabytkowych wsi z domami przysłupowymi. W pobliżu warto odwiedzić Jelenią Górę, Jezioro Pilchowickie i Skalniki Raduńskie. To idealne miejsce na rodzinną wycieczkę z dziećmi połączoną z poznaniem lokalnej przyrody." },
+      { name: "Muzeum Motoryzacji WENA Oława", short: "Największe muzeum motoryzacji w Europie Środkowej",
+        km: 70, time: "1 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Wena_muzeum_motoryzacji.jpg/800px-Wena_muzeum_motoryzacji.jpg",
+        desc: "Muzeum Motoryzacji WENA w Oławie to największe prywatne muzeum motoryzacji w Europie Środkowej, otwarte w 2024 roku przez pasjonata Tomasza Jurczaka. Na powierzchni ponad 5500 m² prezentuje ponad 300 samochodów, 192 rowery i 100 motocykli — od Daimlera z 1895 roku po ostatni wyprodukowany Fiat 126p i Poloneza. Część ekspozycji to stała wystawa Życie w PRL-u z kolekcją 33 000 przedmiotów. Na terenie muzeum działa restauracja z klimatem PRL-u, a każdy eksponat ma szczegółowy opis swojej historii. Muzeum nie wymaga rezerwacji i jest otwarte codziennie." },
+      { name: "Muzeum Broni i Militariów Świdnica (Witoszów)", short: "Prywatne muzeum militarne, ponad 2000 eksponatów",
+        km: 22, time: "19 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Muzeum_broni_swidnica.jpg/800px-Muzeum_broni_swidnica.jpg",
+        desc: "Muzeum Broni i Militariów w Witoszowie Dolnym koło Świdnicy to jedyne w Polsce prywatne muzeum militarne działające na podstawie regulaminu Ministerstwa Kultury, założone w 1999 roku przez Stanisława Gabrysia. Kolekcja liczy ponad 2000 eksponatów — od karabinów iglicowych z XIX wieku po czołg T-72 i stację radarową RW-31, wiele z nich unikatowych na skalę kraju. Ogromna część zbiorów pochodzi z czasów II wojny światowej i obejmuje broń strzelecką, białą, mundury i odznaczenia. Muzeum prowadzi też działalność dydaktyczną z prelekcjami i strzelnicą. To obowiązkowe miejsce dla miłośników historii wojskowości." },
+    ]
+  },
+  {
+    cat: "🌆 Miasta i miasteczka",
+    items: [
+      { name: "Jelenia Góra – Stare Miasto", short: "Arkadowe podcienia, Karkonosze w tle",
+        km: 90, time: "1 godz 17 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Jelenia_Gora_rynek.jpg/800px-Jelenia_Gora_rynek.jpg",
+        desc: "Jelenia Góra to największe miasto w Sudetach, z urokliwym barokowym rynkiem ozdobionym 11 kamienicami podcieniowymi tworzącymi 108 arkad. Otoczenie Kotliny Jeleniogórskiej — śniegiem Karkonoszy po jednej stronie i kopcami Rudaw Janowickich po drugiej — tworzy wyjątkowe tło dla spaceru po starym mieście. Kościół pw. św. Erazma i Pankracego na wzgórzu ponad rynkiem jest jednym z piękniejszych gotyckich kościołów Dolnego Śląska. Jelenia Góra to baza wypadowa do Karpacza, Szklarskiej Poręby i Karkonoszy. Miasto ma dobrze rozwiniętą gastronomię i bogatą ofertę kulturalną." },
+      { name: "Kłodzko – twierdza i most", short: "Twierdza bastionowa i gotycki most",
+        km: 44, time: "37 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Klodzko_twierdza.jpg/800px-Klodzko_twierdza.jpg",
+        desc: "Kłodzko to historyczna stolica Ziemi Kłodzkiej, z imponującą twierdzą bastionową z XVII–XVIII wieku, którą można zwiedzać przez labirynty tuneli i potern. Gotycki most w centrum miasta, ozdobiony figurkami świętych, jest wzorowany na Moście Karola w Pradze i stanowi jeden z najpiękniejszych zabytków regionu. Stare miasto z rynkiem i kamienicami tętni życiem, a liczne restauracje serwują kuchnię regionalną. W okolicach Kłodzka koncentruje się wiele atrakcji Ziemi Kłodzkiej — uzdrowiska, twierdze i jaskinie. Kłodzko jest doskonałą bazą wypadową w tej części Sudetów." },
+      { name: "Świdnica – rynek i zabytki", short: "Kościół Pokoju UNESCO, piękny rynek",
+        km: 22, time: "19 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Swidnica_rynek.jpg/800px-Swidnica_rynek.jpg",
+        desc: "Świdnica to jedna z dawnych stolic Piastów świdnickich, z pięknym barokowym rynkiem, kościołem Wniebowzięcia NMP (dawną katedrą) i wpisanym na Listę UNESCO Kościołem Pokoju z XVII wieku. Ratusz z XVI-XVII wieku, bogato zdobione kamieniczki i fontanna tworzą jedno z najładniejszych starych miast na Dolnym Śląsku. Muzeum Srebrne Miasto opowiada historię dawnego centrum metalurgicznego. Świdnica jest blisko Iwin — to idealna wycieczka na kilka godzin." },
+      { name: "Legnica – stare miasto", short: "Piastowski gród, zamek, gotyk i barok",
+        km: 55, time: "47 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Legnica_rynek.jpg/800px-Legnica_rynek.jpg",
+        desc: "Legnica to dawna stolica Piastów legnickich, jedno z ważniejszych miast historycznych Dolnego Śląska ze strzelistą wieżą ratuszową i zamkiem Piastów z XIII wieku. Gotycka katedra pw. św. Piotra i Pawła kryje tumbę Bolka II — jeden z cenniejszych średniowiecznych nagrobków w Polsce. Renesansowy i barokowy rynek z arkadową zabudową to serce życia miejskiego. W okolicy leży Legnickie Pole, gdzie w 1241 roku polska armia powstrzymała Mongołów. Legnica ma dobrze zachowane zabytkowe centrum i ciekawą ofertę gastronomiczną." },
+      { name: "Ziębice (Münsterberg)", short: "Gotycki kościół św. Jerzego, mury obronne",
+        km: 22, time: "19 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Ziebice_rynek.jpg/800px-Ziebice_rynek.jpg",
+        desc: "Ziębice to małe miasteczko z gotyckim kościołem pw. św. Jerzego z XIV-XV wieku — jednym z największych gotyckich kościołów na Dolnym Śląsku, z imponującym wnętrzem i cennym wyposażeniem. Fragmenty murów obronnych z basztami i resztki zamku nadają miasteczku atmosferę dawnej twierdzy. Historia Ziębic jako centrum Piastów ziębickich sięga XII wieku i jest fascynująca. Rynek z zabytkową zabudową zachował kameralny klimat dawnego śląskiego miasteczka. Ziębice leżą kilka minut od Iwin — to idealna wycieczka popołudniowa." },
+      { name: "Paczków – polskie Carcassonne", short: "Jedyne w pełni zachowane mury miejskie w PL",
+        km: 53, time: "45 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Paczk%C3%B3w_Rynek.jpg/800px-Paczk%C3%B3w_Rynek.jpg",
+        desc: "Paczków to jedyne w Polsce miasto z niemal kompletnym pierścieniem murów miejskich z basztami i bramami, porównywane z francuskim Carcassonne. Gotyckie fortyfikacje z XIV-XV wieku zachowały się w wyjątkowym stanie — niemal bez luk — i otaczają stare miasto z gotyckim kościołem pw. św. Jana Ewangelisty i rynkiem. Gotycka brama Wrocławska stanowi symbol miasta, a spacer po murach daje wyjątkowe poczucie obcowania z żywą historią. Zamek biskupów wrocławskich uzupełnia zabytkowy obraz miasta. Paczków jest częstym celem jednodniowych wycieczek z Kłodzka, Ziębic i Nysy." },
+      { name: "Bardo Śląskie – Kotlina Kłodzka", short: "Sanktuarium, przełom Nysy, rafting",
+        km: 37, time: "32 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Bardo_Slaskie_rzeka.jpg/800px-Bardo_Slaskie_rzeka.jpg",
+        desc: "Bardo Śląskie to jedno z ważniejszych śląskich centrów pielgrzymkowych, z barokową bazyliką Nawiedzenia NMP i cudowną rzeźbą Matki Bożej z XIII wieku. Miasteczko leży w spektakularnym przełomie Nysy Kłodzkiej, gdzie rzeka przebija się przez skaliste ściany — to tutaj w wąwozie zwanym Piekłem tworzy imponujące katarakty. Nad rzeką można uprawiać rafting i spływy kajakowe, a szlaki piesze prowadzą przez malownicze wzgórza z widokami na kotlinę. Bardo to doskonały punkt wypadowy w Góry Bardzkie i Ziemię Kłodzką. Każdego roku odbywa się tu Festiwal Muzyki Kościelnej." },
+    ]
+  },
+  {
+    cat: "👑 Korona Sudetów PTTK",
+    items: [
+      { name: "Luž / Lausche (793 m)", short: "Góry Łużyckie – DE/CZ, wygasły wulkan",
+        km: 165, time: "2 godz 22 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Lausche_Zittauer_Gebirge.jpg/800px-Lausche_Zittauer_Gebirge.jpg",
+        desc: "Luž (Lausche) to najwyższy szczyt Gór Łużyckich (793 m), wygasły wulkan bazaltowy na pograniczu Czech i Niemiec o charakterystycznej stożkowatej sylwetce. Jest jednym z 22 szczytów Korony Sudetów PTTK, ustanowionej przez Oddział Wrocławski PTTK w 2001 roku. Z wieży widokowej na szczycie roztacza się panorama na trzy kraje jednocześnie — Niemcy, Czechy i Polskę. Wejście z Jonsdorfu lub Nového Města zajmuje ok. 1 godziny. W okolicy warto odwiedzić uzdrowisko Oybin z romantycznymi ruinami klasztoru celestynów." },
+      { name: "Ještěd (1012 m)", short: "Grzbiet Jesztedzki – CZ, wieża-hotel na szczycie",
+        km: 130, time: "1 godz 51 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Jested_from_below.jpg/800px-Jested_from_below.jpg",
+        desc: "Ještěd to najwyższy szczyt Grzbietu Jesztedzieckiego (1012 m) koło Liberca w Czechach, jeden z 22 szczytów Korony Sudetów PTTK. Na szczycie stoi słynna futurystyczna wieża-hotel zaprojektowana przez Karla Hubáčka w 1973 roku — nagradzana za fuzję architektury z krajobrazem. Z restauracji na szczycie rozciąga się widok na całą czeską i polską część Sudetów. Wejście możliwe jest pieszo lub kolejką linową z Liberca. Liberec to ciekawe czeskie miasto z pięknym rynkiem, zoo i centrum handlowym." },
+      { name: "Wysoka Kopa (1126 m)", short: "Góry Izerskie – najwyższy szczyt po stronie PL",
+        km: 110, time: "1 godz 34 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Wysoka_Kopa_szczyt.jpg/800px-Wysoka_Kopa_szczyt.jpg",
+        desc: "Wysoka Kopa to najwyższy szczyt Gór Izerskich po stronie polskiej (1126 m), jeden z 22 szczytów Korony Sudetów PTTK. Góry Izerskie są najmniej tłocznym i najmniej skomercjalizowanym pasmem zachodnich Sudetów — idealne dla szukających spokoju. Szczyt leży w pobliżu granicy polsko-czeskiej i można tu dojść szlakami z Szklarskiej Poręby lub Świeradowa-Zdroju. Okolica słynie z rozległych torfowisk i unikatowej roślinności subalpejskiej. Blisko leży Smrk — najwyższy szczyt czeskich Gór Izerskich." },
+      { name: "Śnieżka (1603 m)", short: "Karkonosze – najwyższy szczyt Sudetów",
+        km: 85, time: "1 godz 12 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Snie%C5%BCka_from_Kopa.jpg/800px-Snie%C5%BCka_from_Kopa.jpg",
+        desc: "Śnieżka (1603 m) to najwyższy szczyt Karkonoszy, całych Sudetów i jeden z 22 obowiązkowych szczytów Korony Sudetów PTTK. Na szczycie stoi charakterystyczna, okrągła meteorologiczna stacja w kształcie latającego spodka, będąca symbolem Karkonoszy. Wejście z Karpacza zajmuje ok. 3 godzin, alternatywnie można skorzystać z wyciągu narciarskiego z Pec pod Sněžkou po stronie czeskiej. Przy dobrej pogodzie widoczne są Tatry, Góry Izerskie i góry Saksonii. Zimą szczyt bywa niedostępny dla turystów bez specjalistycznego sprzętu ze względu na warunki alpejskie." },
+      { name: "Skalnik (945 m)", short: "Rudawy Janowickie – panorama Karkonoszy",
+        km: 79, time: "1 godz 8 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Skalnik_Rudawy.jpg/800px-Skalnik_Rudawy.jpg",
+        desc: "Skalnik to najwyższy szczyt Rudaw Janowickich (945 m) i jeden z 22 szczytów Korony Sudetów PTTK. Na szczycie stoi wieża widokowa, z której rozciąga się panorama na Karkonosze po jednej stronie i Kotlinę Jeleniogórską po drugiej. Rudawy Janowickie to malownicze pasmo z licznymi skałkami i wieżami granitowymi. W pobliżu leżą słynne Kolorowe Jeziorka i ruiny zamku Bolczów nad Jeziorem Pilchowickim. Wejście z Janowic Wielkich zajmuje ok. 2 godzin." },
+      { name: "Skopiec (724 m)", short: "Góry Kaczawskie – wieża widokowa, Korona",
+        km: 50, time: "42 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Skopiec_2011.jpg/800px-Skopiec_2011.jpg",
+        desc: "Skopiec (724 m) to najwyższy szczyt Gór Kaczawskich i jeden z 22 obowiązkowych szczytów Korony Sudetów PTTK. Drewniana wieża widokowa na wierzchołku oferuje panoramę na Góry Sowie, Wałbrzyskie, Karkonosze i rozległą Nizinę Śląską. Góry Kaczawskie to pasmo szczególne geologicznie — można tu znaleźć wapienie, chalcedony i inne minerały. W pobliżu leży Złotoryja — najstarsze miasto Polski z prawem miejskim, warte odwiedzin. Wejście zajmuje ok. 1 godziny z okolicznych miejscowości." },
+      { name: "Borowa (853 m)", short: "Góry Wałbrzyskie – najwyższy szczyt grupy",
+        km: 30, time: "26 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Borowa_szczyt.jpg/800px-Borowa_szczyt.jpg",
+        desc: "Borowa to najwyższy szczyt Gór Wałbrzyskich (853 m) i jeden z 22 szczytów Korony Sudetów PTTK. Masyw Borowej jest rozległy i zalesiony, a na szczycie stoi skromna wieża widokowa z ładnymi widokami na Sudety Środkowe. Wejście z Wałbrzycha lub Szczawna-Zdroju zajmuje ok. 1,5–2 godziny. Okolica Wałbrzycha obfituje w atrakcje — Zamek Książ, sztolnie Riese, termy — warto połączyć wizytę z kilkoma z nich. Góry Wałbrzyskie to spokojne, mało tłoczne pasmo, idealne do trekkingu." },
+      { name: "Waligóra (936 m)", short: "Góry Kamienne – najwyższy szczyt grupy",
+        km: 38, time: "32 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Waligora_szczyt.jpg/800px-Waligora_szczyt.jpg",
+        desc: "Waligóra to najwyższy szczyt Gór Kamiennych (936 m) i jeden z 22 szczytów Korony Sudetów PTTK. Na wierzchołku stoi drewniana wieża widokowa z panoramą na Karkonosze, Góry Sowie i Śląsk. Góry Kamienne sąsiadują z Wałbrzyskim Parkiem Krajobrazowym i obejmują malowniczy masyw Grzbietu Suchego i Grzbietu Kruczego. Wejście możliwe z wielu stron — z Mieroszowa, Chwaliszowa lub Raszowa. Okolice słyną z licznych formacji skalnych i pięknych widokowych grzbietów." },
+      { name: "Žaltman (739 m)", short: "Góry Jastrzębie (CZ) – skałki widokowe",
+        km: 55, time: "47 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/%C5%BDaltman.jpg/800px-%C5%BDaltman.jpg",
+        desc: "Žaltman to najwyższy szczyt Gór Jastrzębia (Jestřebí hory) w Czechach (739 m) i jeden z 22 szczytów Korony Sudetów PTTK. Na wierzchołku stoi wieża widokowa z panoramą na Góry Stołowe, Adršpach i Karkonosze. Teren między Kudową-Zdrojem a granicą czeską obfituje w piękne szlaki prowadzące przez Žaltman. Warto łączyć wejście z wizytą w Adršpachu i Teplicach Skalnych. To jeden z łatwiej dostępnych szczytów Korony — idealny dla rodzin z dziećmi." },
+      { name: "Szczeliniec Wielki (919 m)", short: "Góry Stołowe – labirynt skalny, panorama",
+        km: 46, time: "39 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Szczeliniec_Wielki.jpg/800px-Szczeliniec_Wielki.jpg",
+        desc: "Szczeliniec Wielki (919 m) to najwyższy szczyt Gór Stołowych i jeden z 22 szczytów Korony Sudetów PTTK. Pionowe piaskowcowe ściany opadają 100-200 metrów w doliny, a na płaskim grzbiecie rozciąga się labirynt formacji skalnych z nazwami jak Małpa, Heniek czy Głowa Napoleona. Schronisko na szczycie istnieje od 1813 roku i jest jednym z najstarszych w Polsce. Z tarasu widokowego panorama obejmuje Kotlinę Kłodzką, Karkonosze i Sudety Środkowe. Wejście stromymi schodami zajmuje ok. 30 minut z parkingu." },
+      { name: "Wielka Sowa (1015 m)", short: "Góry Sowie – wieża widokowa, blisko Iwin",
+        km: 14, time: "12 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Wielka_Sowa_szczyt.jpg/800px-Wielka_Sowa_szczyt.jpg",
+        desc: "Wielka Sowa (1015 m) to najwyższy szczyt Gór Sowich i jeden z 22 szczytów Korony Sudetów PTTK — najbliżej położony od Iwin. Stalowa wieża widokowa na szczycie oferuje panoramę 360°: Karkonosze, Góry Kamienne, Stołowe i rozległą Nizinę Śląską. Liczne szlaki prowadzą z Walimia, Rzeczki i Jedliny-Zdroju, a czas wejścia to ok. 1–1,5 godziny. Pod szczytem kryją się sztolnie Riese — podziemia projektu Włodarz. Latem i zimą Wielka Sowa jest jedną z najbardziej popularnych gór w okolicy." },
+      { name: "Kłodzka Góra (765 m)", short: "Góry Bardzkie – punkt widokowy",
+        km: 40, time: "34 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Klodzka_Gora.jpg/800px-Klodzka_Gora.jpg",
+        desc: "Kłodzka Góra to najwyższy szczyt Gór Bardzkich (765 m) i jeden z 22 szczytów Korony Sudetów PTTK. Szerokie połoniny na szczycie i wśród stoków zapewniają ładne widoki na Kotlinę Kłodzką, Masyw Śnieżnika i Góry Sowie. Góry Bardzkie to spokojne, mało tłoczne pasmo idealnie nadające się do spokojnych wędrówek z dala od turystycznych szlaków. W pobliżu leży Bardo Śląskie z bazyliką i przełomem Nysy. Wejście z Barda lub Ząbkowic zajmuje ok. 1,5–2 godziny." },
+      { name: "Velká Deštná (1115 m)", short: "Góry Orlickie – CZ, najwyższy szczyt grupy",
+        km: 72, time: "1 godz 2 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Velka_Destna.jpg/800px-Velka_Destna.jpg",
+        desc: "Velká Deštná to najwyższy szczyt Gór Orlickich (1115 m) po stronie czeskiej i jeden z 22 szczytów Korony Sudetów PTTK. Szczytu pilnuje czeska stacja meteorologiczna i wieża nadawcza, a rozległe widoki obejmują zarówno polską, jak i czeską część Sudetów Środkowych. Góry Orlickie po stronie czeskiej są gęsto zalesione i znakomite do turystyki pieszej z dala od tłumów. Wejście możliwe z Deštné v Orlických horách lub z przełęczy Sedloňov. Polska strona pasma oferuje uzdrowiska Duszniki i Polanicę." },
+      { name: "Jagodna (977 m)", short: "Góry Bystrzyckie – widoki na Kotlinę Kłodzką",
+        km: 56, time: "48 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Jagodna_szczyt.jpg/800px-Jagodna_szczyt.jpg",
+        desc: "Jagodna to jeden z czołowych szczytów Gór Bystrzyckich (977 m) i jeden z 22 szczytów Korony Sudetów PTTK. Rozległe grzbiety i połoniny zapewniają piękne widoki na Kotlinę Kłodzką, Góry Stołowe i Śnieżnik. Góry Bystrzyckie to pasmo spokojne i mało skomercjalizowane, idealne do trekingu z dziećmi. W okolicy leżą uzdrowiska Duszniki-Zdrój i Polanica-Zdrój. Trasy na Jagodnę prowadzą z wielu stron — m.in. z Lasówki i Wójtowic." },
+      { name: "Smrk (1125 m)", short: "Góry Złote i Bialskie (Rychleby) – CZ",
+        km: 78, time: "1 godz 7 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Smrk_Rychleby.jpg/800px-Smrk_Rychleby.jpg",
+        desc: "Smrk to najwyższy szczyt Gór Złotych i Bialskich (Rychlebské hory) po stronie czeskiej (1125 m), jeden z 22 szczytów Korony Sudetów PTTK. Zalesiony masyw na granicy polsko-czeskiej oferuje spokojne trasy bez tłumów, a widoki z grzbietu obejmują Masyw Śnieżnika i Góry Opawskie. Wejście możliwe z czeskiej strony od Zlatých Hor. W pobliżu leżą Złoty Stok i Jaskinia Radochowska po stronie polskiej. To jeden z trudniej dostępnych szczytów Korony ze względu na oddalenie od głównych dróg." },
+      { name: "Śnieżnik (1424 m)", short: "Masyw Śnieżnika – panorama 360°, Korona",
+        km: 81, time: "1 godz 9 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Snieznik_kl_vrchol.jpg/800px-Snieznik_kl_vrchol.jpg",
+        desc: "Śnieżnik (1424 m) to najwyższy szczyt Masywu Śnieżnika i całych Sudetów Wschodnich, jeden z 22 szczytów Korony Sudetów PTTK. Jest jedynym szczytem masywu powyżej górnej granicy lasu, co zapewnia panoramę 360° — w czystą pogodę widać Tatry. Przy szczycie bierze początek rzeka Morawa, spływająca do Dunaju, co czyni Śnieżnik wyjątkowym geograficznie. Popularne wejście z Międzygórza zajmuje ok. 2,5 godziny. W pobliżu leży Jaskinia Niedźwiedzia w Kletnie — obowiązkowy punkt połączony z wejściem." },
+      { name: "Příčný vrch (975 m)", short: "Góry Opawskie – CZ, najwyższy szczyt całej grupy",
+        km: 110, time: "1 godz 35 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Przicny_vrch.jpg/800px-Przicny_vrch.jpg",
+        desc: "Příčný vrch to najwyższy szczyt Złotohorskiej Vrchoviny (Gór Opawskich) po stronie czeskiej (975 m) i jeden z 22 szczytów Korony Sudetów PTTK. Góry Opawskie to piękne pasmo na pograniczu polsko-czeskim, słynące z kurortów i zamków po obu stronach granicy. Wejście możliwe z Zlatých Hor lub Głuchołaz od strony polskiej. Okolica bogata w zabytki: zamek Jánský Vrch w Javorníku i termy w Głuchołazach. To jeden z najdalej wysuniętych na wschód szczytów Korony." },
+      { name: "Praděd (1491 m)", short: "Wysoki Jesionik – CZ, najwyższy szczyt Sudetów Wsch.",
+        km: 135, time: "1 godz 56 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Praded_vrchol.jpg/800px-Praded_vrchol.jpg",
+        desc: "Praděd to najwyższy szczyt Wysokiego Jesionika (Hrubý Jeseník) i całych Sudetów Wschodnich (1491 m), jeden z 22 szczytów Korony Sudetów PTTK i najwyższy po Śnieżce spośród nich. Na szczycie stoi charakterystyczna wieża transmisyjna widoczna z odległości dziesiątek kilometrów. Otoczenie szczytu należy do Parku Narodowego Jeseníky — ścisłego rezerwatu z unikatową florą i fauną. Wejście z różnych stron zajmuje 2–3 godziny, alternatywnie można dojechać wyciągiem z Ovčárny. To obowiązkowy punkt dla kompletujących Koronę Sudetów." },
+      { name: "Jeřáb (1003 m)", short: "Góry Hanuszowickie – CZ",
+        km: 115, time: "1 godz 38 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Jerab_hora.jpg/800px-Jerab_hora.jpg",
+        desc: "Jeřáb to najwyższy szczyt Gór Hanuszowickich (1003 m) w Czechach, jeden z 22 szczytów Korony Sudetów PTTK. Masyw leży na pograniczu Sudetów Wschodnich i Moraw i jest jednym z mniej odwiedzanych spośród wszystkich szczytów Korony. Gęste lasy i spokojne szlaki czynią z Jeřába cel dla szukających kontaktu z dziewiczą przyrodą. Wejście możliwe z Hanušovic lub od strony Šumperka. Okolice oferują wiele uroków czeskiej prowincji — małe miasteczka, dobre piwo i cicho tu nawet w szczycie sezonu." },
+      { name: "Lázek (714 m)", short: "Zábřežská vrchovina – CZ, jeden z niższych Korony",
+        km: 130, time: "1 godz 51 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Lazek_kopec.jpg/800px-Lazek_kopec.jpg",
+        desc: "Lázek to najwyższy punkt Zábřežskiej Vrchoviny (714 m) w Czechach, jeden z 22 szczytów Korony Sudetów PTTK i jeden z niższych na liście. Nie jest to typowy alpejski szczyt — to raczej wzgórze otoczone polami i lasami morawskiego przedgórza. Wejście z okolicznych wsi jest krótkie i niewymagające. Lázek stanowi dowód, że Korona Sudetów obejmuje bardzo różnorodne tereny geograficzne, od alpejskich szczytów po nizinne wzgórza. To dla wielu turystów jeden z ostatnich zaliczanych szczytów Korony." },
+      { name: "Slunečná (800 m)", short: "Niski Jesionik (Nízký Jeseník) – CZ",
+        km: 140, time: "2 godz",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Slunecna_hora.jpg/800px-Slunecna_hora.jpg",
+        desc: "Slunečná to najwyższy punkt Niskiego Jesionika (Nízký Jeseník, 800 m) w Czechach, jeden z 22 szczytów Korony Sudetów PTTK. Masyw Niskiego Jesionika to płaskowyż leśny bez dramatycznych szczytów — bardziej krajobraz lesisty niż typowo górski. Wejście na Slunečną jest krótkie i łatwe, a sam obszar jest znany z letnich kurortów i sanatoriów w okolicznych miasteczkach. To kolejny z szyi Korony bardziej symbolicznych niż widokowo spektakularnych. Okolice oferują raczej spokój i uzdrowiskowy charakter." },
+      { name: "Ślęża (718 m)", short: "Masyw Ślęży – sacrum Śląska, Przedgórze Sudeckie",
+        km: 38, time: "32 min",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Sleza_gora.jpg/800px-Sleza_gora.jpg",
+        desc: "Ślęża to samotny stożek wulkaniczny wyrastający z płaskiej Niziny Śląskiej (718 m), od tysięcy lat uważany za górę świętą — centrum kultowe Słowian zamieszkujących ten teren przed chrystianizacją. Odkryte na stokach posągi kamienne (m.in. słynny niedźwiedź i mnich) oraz liczne ślady kultu pogańskiego czynią ją unikalnym miejscem w Polsce. Na szczycie stoi romański kościół z IX-X wieku, zamieniony z dawnej świątyni pogańskiej. Masyw Ślęży jest parkiem krajobrazowym z gęstą siecią szlaków. To jeden z 22 szczytów Korony Sudetów PTTK i ważny symbol Dolnego Śląska." },
+    ]
+  }
+];
+
+let checked = JSON.parse(localStorage.getItem('ds-checked-v2') || '{}');
+let currentFilter = 'all';
+
+function save(){ localStorage.setItem('ds-checked-v2', JSON.stringify(checked)); }
+function getKey(ci, ii){ return ci+'-'+ii; }
+
+function updateStats(){
+  const total = DATA.reduce((s,c)=>s+c.items.length,0);
+  const done = Object.values(checked).filter(Boolean).length;
+  document.getElementById('cc').textContent = done;
+  document.getElementById('tc').textContent = total;
+  document.getElementById('pf').style.width = (done/total*100)+'%';
+}
+
+function toggle(key, el, e){
+  if(e) e.stopPropagation();
+  checked[key] = !checked[key];
+  if(!checked[key]) delete checked[key];
+  save();
+  el.classList.toggle('checked', !!checked[key]);
+  el.querySelector('.checkbox').textContent = checked[key] ? '✓' : '';
+  updateStats();
+  applyFilter();
+}
+
+window.clearAll = function(){
+  if(!confirm('Resetować wszystkie oznaczenia?')) return;
+  checked={};save();render();
+}
+
+window.filterView = function(f){
+  currentFilter=f;applyFilter();
+}
+
+function applyFilter(){
+  document.querySelectorAll('.item').forEach(el=>{
+    const c = el.classList.contains('checked');
+    if(currentFilter==='all') el.classList.remove('hidden');
+    else if(currentFilter==='done') el.classList.toggle('hidden',!c);
+    else if(currentFilter==='todo') el.classList.toggle('hidden',c);
+  });
+  document.querySelectorAll('.category-section').forEach(sec=>{
+    const v = sec.querySelectorAll('.item:not(.hidden)').length;
+    sec.classList.toggle('hidden', v===0 && currentFilter!=='all');
+  });
+}
+
+function openModal(item){
+  document.getElementById('modal-title').textContent = item.name;
+  const mapsUrl = 'https://www.google.com/maps/dir/Iwiny,+Dolny+%C5%9Al%C4%85sk/'+encodeURIComponent(item.name+' Dolny Śląsk');
+  document.getElementById('modal-nav').href = mapsUrl;
+  document.getElementById('modal-desc').textContent = item.desc;
+  const wrap = document.getElementById('modal-img-wrap');
+  wrap.innerHTML = '';
+  if (item.img) {
+    const imgEl = document.createElement('img');
+    imgEl.className = 'modal-img';
+    imgEl.src = item.img;
+    imgEl.alt = item.name;
+    imgEl.onerror = function() { this.parentNode.innerHTML = '<div class="modal-img-placeholder">🏔️</div>'; };
+    wrap.appendChild(imgEl);
+  } else {
+    wrap.innerHTML = '<div class="modal-img-placeholder">🏔️</div>';
+  }
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+window.closeModal = function(e){
+  if(e.target===document.getElementById('overlay')) closeModalBtn();
+}
+window.closeModalBtn = function(){
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+let globalIdx = 1;
+
+function render(){
+  globalIdx=1;
+  const app=document.getElementById('app');
+  app.innerHTML='';
+  DATA.forEach((cat,ci)=>{
+    const sec=document.createElement('div');
+    sec.className='category-section';
+    const header=document.createElement('div');
+    header.className='category-header';
+    header.innerHTML=`<span>${cat.cat.split(' ')[0]}</span><h2>${cat.cat.replace(/^\S+ /,'')}</h2><span class="cat-count">${cat.items.length}</span><span class="cat-toggle">▾</span>`;
+    header.addEventListener('click',()=>sec.classList.toggle('collapsed'));
+    const list=document.createElement('div');
+    list.className='items-list';
+    cat.items.forEach((item,ii)=>{
+      const key=getKey(ci,ii);
+      const isChecked=!!checked[key];
+      const idx=globalIdx++;
+      const el=document.createElement('div');
+      el.className='item'+(isChecked?' checked':'');
+      el.innerHTML=`
+        <span class="item-idx">${String(idx).padStart(2,'0')}</span>
+        <span class="checkbox">${isChecked?'✓':''}</span>
+        <div class="item-body">
+          <div class="item-name">${item.name}</div>
+          <div class="item-short">${item.short}</div>
+          <div class="item-meta">
+            <span class="badge badge-dist">📍 ~${item.km} km</span>
+            <span class="badge badge-time">🚗 ${item.time}</span>
+            <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}])">📖 opis</button>
+          </div>
+        </div>`;
+      el.querySelector('.checkbox').addEventListener('click', e=>toggle(key,el,e));
+      el.querySelector('.item-name').addEventListener('click', e=>toggle(key,el,e));
+      list.appendChild(el);
+    });
+    sec.appendChild(header);
+    sec.appendChild(list);
+    app.appendChild(sec);
+    const d=document.createElement('div');
+    d.className='divider';
+    app.appendChild(d);
+  });
+  updateStats();applyFilter();
+}
+render();
+</script>
+</body>
+</html>
