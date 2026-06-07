@@ -635,7 +635,7 @@ function applyFilter(){
 
 function openModal(item){
   document.getElementById('modal-title').textContent = item.name;
-  const mapsUrl = 'https://www.google.com/maps/dir/Iwiny,+Dolny+%C5%9Al%C4%85sk/'+encodeURIComponent(item.name+' Dolny Śląsk');
+  const mapsUrl = 'https://www.google.com/maps/search/'+encodeURIComponent(item.name+' Dolny Śląsk');
   document.getElementById('modal-nav').href = mapsUrl;
   document.getElementById('modal-desc').textContent = item.desc;
   const wrap = document.getElementById('modal-img-wrap');
