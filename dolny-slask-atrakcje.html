@@ -454,7 +454,7 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
     <button onclick="toggleActivityFilter()" id="btn-activity">🎯 <span class="btn-label">Aktywność</span></button>
     <button onclick="toggleFuelBar()" id="btn-fuel">⛽ <span class="btn-label">Paliwo</span></button>
     <button onclick="toggleWeekend()" id="weekend-btn">🗓️ <span class="btn-label">Weekend</span></button>
-    <button onclick="toggleDataPanel()" id="data-btn">💾 <span class="btn-label">Dane</span></button>
+
   </div>
   <div class="controls-row search-row">
     <input id="search-input" type="search" placeholder="🔍 Szukaj atrakcji..." oninput="applyFilters()" autocomplete="off">
@@ -473,6 +473,7 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
       <option value="dist-desc">Odległość ↓</option>
       <option value="rating">Ocena ↓</option>
     </select>
+    <button onclick="toggleDataPanel()" id="data-btn">💾 <span class="btn-label">Dane</span></button>
   </div>
 </div>
 <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
