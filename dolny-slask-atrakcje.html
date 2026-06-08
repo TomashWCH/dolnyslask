@@ -2,31 +2,8 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atrakcje Dolnego Śląska</title>
-
-<!-- ═══════════════════════════════════════════
-     PWA – Progressive Web App
-     ═══════════════════════════════════════════ -->
-<link rel="manifest" href="manifest.json">
-
-<!-- Motyw i kolor paska systemowego Android -->
-<meta name="theme-color" content="#1a1a2e">
-<meta name="mobile-web-app-capable" content="yes">
-
-<!-- iOS Safari -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dolny Śląsk">
-<link rel="apple-touch-icon" href="icon-192.png">
-
-<!-- Opis dla wyszukiwarek i udostępniania -->
-<meta name="description" content="Osobista lista odkryć Dolnego Śląska – zamki, góry, jaskinie i więcej.">
-
-<!-- Ikony -->
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1a1a2e;--paper:#f5f0e8;--parchment:#ede8d8;--accent:#8b2c2c;--gold:#c9a84c;--moss:#4a6741;--sky:#4a7fa5;--muted:#8a8070;--checked-bg:#eaf5ea;}
@@ -94,23 +71,140 @@ button.danger:hover{background:var(--accent);color:var(--paper);}
 footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);border-top:1px solid rgba(0,0,0,.07);margin-top:.5rem;}
 @media(min-width:600px){.modal-overlay{align-items:center;}.modal{border-radius:12px;max-height:80vh;}.modal-img,.modal-img-placeholder{height:240px;}}
 @media(max-width:400px){.items-list{grid-template-columns:1fr;}}
+
+/* ── Controls row ── */
+.controls-row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;}
+.search-row{margin-top:.5rem;}
+#search-input{flex:1;min-width:160px;padding:.45rem .8rem;border:1.5px solid var(--ink);background:var(--paper);font-family:'Lato',sans-serif;font-size:.82rem;color:var(--ink);border-radius:2px;}
+#search-input:focus{outline:none;border-color:var(--accent);}
+#dist-filter{padding:.4rem .6rem;border:1.5px solid var(--ink);background:var(--paper);font-family:'Lato',sans-serif;font-size:.78rem;color:var(--ink);cursor:pointer;border-radius:2px;}
+.fb{opacity:.6;}
+.fb.active{opacity:1;background:var(--ink);color:var(--paper);}
+/* ── Modal extras ── */
+.modal-btn-row{display:flex;gap:.5rem;margin:.4rem 0 .8rem;flex-wrap:wrap;}
+.modal-photos-btn{font-family:'Lato',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.45rem 1rem;border:1.5px solid var(--sky);background:transparent;color:var(--sky);cursor:pointer;border-radius:2px;transition:all .18s;}
+.modal-photos-btn:hover{background:var(--sky);color:white;}
+.modal-photos-btn.has-photos{background:var(--sky);color:white;}
+.modal-user-section{margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(0,0,0,.1);}
+.modal-section-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem;}
+.star-row{display:flex;gap:4px;}
+.star{font-size:1.5rem;color:#ccc;cursor:pointer;transition:color .12s;line-height:1;user-select:none;}
+.star.active{color:#f0b429;}
+.star:hover,.star:hover~.star{color:#f0b429;}
+.modal-input{width:100%;padding:.45rem .7rem;border:1.5px solid rgba(0,0,0,.15);background:var(--parchment);font-family:'Lato',sans-serif;font-size:.82rem;color:var(--ink);border-radius:2px;margin-top:.2rem;}
+.modal-input:focus{outline:none;border-color:var(--accent);}
+.modal-textarea{min-height:70px;resize:vertical;line-height:1.5;}
+.item-stars{font-size:.78rem;color:#f0b429;margin-top:.1rem;letter-spacing:1px;}
+.item-note-badge{font-size:.68rem;color:var(--moss);margin-top:.1rem;}
+.no-results{padding:3rem 1rem;text-align:center;color:var(--muted);font-style:italic;grid-column:1/-1;}
+.photos-quick-btn{border-color:var(--sky);color:var(--sky);}
+
+/* ── STATS PANEL ── */
+#stats-panel{background:var(--paper);border-bottom:3px solid var(--gold);}
+.stats-panel-inner{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 2rem;}
+.stats-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.stats-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--ink);}
+.stats-close{background:none;border:1.5px solid var(--muted);color:var(--muted);width:28px;height:28px;cursor:pointer;border-radius:50%;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.stats-close:hover{border-color:var(--accent);color:var(--accent);}
+.stats-section{margin-bottom:1.5rem;}
+.stats-section-title{font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem;}
+
+/* Overall */
+.stats-overall{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.8rem;}
+.stat-card{background:var(--parchment);border:1px solid rgba(0,0,0,.08);padding:.8rem 1rem;text-align:center;border-radius:3px;}
+.stat-card-num{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:var(--moss);line-height:1;}
+.stat-card-label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.3rem;}
+
+/* Category bars */
+.cat-bar-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.55rem;}
+.cat-bar-icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0;}
+.cat-bar-name{font-size:.75rem;color:var(--ink);width:160px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cat-bar-track{flex:1;height:10px;background:rgba(0,0,0,.08);border-radius:5px;overflow:hidden;}
+.cat-bar-fill{height:100%;background:linear-gradient(90deg,var(--moss),var(--gold));border-radius:5px;transition:width .6s ease;}
+.cat-bar-count{font-size:.72rem;color:var(--muted);width:36px;text-align:right;flex-shrink:0;}
+
+/* Ratings */
+.ratings-summary{display:flex;gap:1.2rem;flex-wrap:wrap;}
+.rating-row{display:flex;align-items:center;gap:.4rem;font-size:.82rem;}
+.rating-stars{color:#f0b429;letter-spacing:1px;}
+.rating-count{color:var(--muted);font-size:.75rem;}
+.top-rated-list{margin-top:.7rem;}
+.top-rated-item{font-size:.8rem;padding:.3rem 0;border-bottom:1px solid rgba(0,0,0,.05);display:flex;gap:.5rem;align-items:center;}
+.top-rated-item .tr-stars{color:#f0b429;font-size:.75rem;}
+.top-rated-item .tr-name{flex:1;color:var(--ink);}
+
+/* Badges */
+.badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.7rem;}
+.badge-card{padding:.8rem;background:var(--parchment);border:1.5px solid rgba(0,0,0,.1);border-radius:3px;text-align:center;transition:all .2s;}
+.badge-card.earned{border-color:var(--gold);background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.05));}
+.badge-card.locked{opacity:.4;filter:grayscale(1);}
+.badge-icon{font-size:1.8rem;margin-bottom:.3rem;}
+.badge-name{font-size:.72rem;font-weight:700;color:var(--ink);margin-bottom:.15rem;}
+.badge-desc{font-size:.62rem;color:var(--muted);line-height:1.3;}
+.badge-progress{font-size:.65rem;color:var(--moss);margin-top:.2rem;font-weight:700;}
 </style>
 </head>
 <body>
 <header>
   <h1>Atrakcje <span>Dolnego Śląska</span></h1>
-  <p class="subtitle">Osobista lista odkryć Dolnego Śląska</p>
+  <p class="subtitle">Osobista lista odkryć · odległości z Iwin</p>
 </header>
 <div class="controls">
-  <div class="stats">Zaliczone: <strong id="cc">0</strong> / <span id="tc">0</span></div>
-  <div class="btn-group">
-    <button onclick="filterView('all')">Wszystkie</button>
-    <button onclick="filterView('todo')">Do zrobienia</button>
-    <button onclick="filterView('done')">Zaliczone ✓</button>
-    <button class="danger" onclick="clearAll()">Resetuj</button>
+  <div class="controls-row">
+    <div class="stats">Zaliczone: <strong id="cc">0</strong> / <span id="tc">0</span></div>
+    <div class="btn-group">
+      <button onclick="filterView('all')" id="fb-all" class="fb active">Wszystkie</button>
+      <button onclick="filterView('todo')" id="fb-todo" class="fb">Do zrobienia</button>
+      <button onclick="filterView('done')" id="fb-done" class="fb">Zaliczone ✓</button>
+      <button class="danger" onclick="clearAll()">Resetuj</button>
+      <button onclick="toggleStats()" id="stats-btn">📊 Statystyki</button>
+    </div>
+  </div>
+  <div class="controls-row search-row">
+    <input id="search-input" type="search" placeholder="🔍 Szukaj atrakcji..." oninput="applyFilters()" autocomplete="off">
+    <select id="dist-filter" onchange="applyFilters()">
+      <option value="0">📍 Wszystkie odległości</option>
+      <option value="30">do 30 km</option>
+      <option value="50">do 50 km</option>
+      <option value="80">do 80 km</option>
+      <option value="120">do 120 km</option>
+      <option value="160">do 160 km</option>
+    </select>
   </div>
 </div>
 <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+<div id="stats-panel" style="display:none;">
+  <div class="stats-panel-inner">
+    <div class="stats-header">
+      <h2 class="stats-title">📊 Twoje statystyki</h2>
+      <button class="stats-close" onclick="toggleStats()">✕</button>
+    </div>
+
+    <!-- Overall progress -->
+    <div class="stats-section">
+      <div class="stats-overall" id="stats-overall"></div>
+    </div>
+
+    <!-- Category bars -->
+    <div class="stats-section">
+      <div class="stats-section-title">Postęp per kategoria</div>
+      <div id="stats-cats"></div>
+    </div>
+
+    <!-- Ratings summary -->
+    <div class="stats-section">
+      <div class="stats-section-title">Twoje oceny</div>
+      <div id="stats-ratings"></div>
+    </div>
+
+    <!-- Badges -->
+    <div class="stats-section">
+      <div class="stats-section-title">Odznaki</div>
+      <div class="badges-grid" id="stats-badges"></div>
+    </div>
+  </div>
+</div>
+
 <div id="app"></div>
 
 <!-- MODAL -->
@@ -121,16 +215,35 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
       <div id="modal-img-wrap"></div>
       <div class="modal-body">
         <div class="modal-title" id="modal-title"></div>
-        <div class="modal-badges">
+        <div class="modal-btn-row">
           <a class="modal-nav-btn" id="modal-nav" href="#" target="_blank" rel="noopener">🗺️ Nawiguj</a>
+          <button class="modal-photos-btn" id="modal-photos-btn" onclick="openPhotos()">📷 Zdjęcia</button>
         </div>
         <div class="modal-desc" id="modal-desc"></div>
+        <div class="modal-user-section">
+          <div class="modal-section-label">Moja ocena</div>
+          <div class="star-row" id="star-row">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+          </div>
+          <div class="modal-section-label" style="margin-top:10px;">Data wizyty</div>
+          <input type="date" id="modal-date" class="modal-input" onchange="saveUserData()">
+          <div class="modal-section-label" style="margin-top:10px;">Notatka</div>
+          <textarea id="modal-note" class="modal-input modal-textarea" placeholder="Twoje wspomnienia, wskazówki, co warto zobaczyć..." oninput="saveUserData()"></textarea>
+          <div class="modal-section-label" style="margin-top:10px;">Link do zdjęć (Google Photos)</div>
+          <div class="photos-input-row">
+            <input type="url" id="modal-photos-url" class="modal-input" placeholder="https://photos.google.com/..." oninput="saveUserData()">
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<footer>Kliknij aby zaznaczyć · ikona 📖 otwiera opis · nawigacja Google Maps</footer>
+<footer>Kliknij nazwę aby zaznaczyć · 📖 opis · 📷 zdjęcia · ⭐ ocena · 📝 notatka</footer>
 
 <script>
 const DATA = [
@@ -586,173 +699,388 @@ const DATA = [
   }
 ];
 
-let checked = JSON.parse(localStorage.getItem('ds-checked-v2') || '{}');
+// ── STORAGE ──────────────────────────────────────────────────────────────────
+let checked   = JSON.parse(localStorage.getItem('ds-checked')   || '{}');
+let userData  = JSON.parse(localStorage.getItem('ds-userdata')  || '{}'); // {key:{rating,date,note,photos}}
 let currentFilter = 'all';
+let currentDist   = 0;
+let currentSearch = '';
+let currentItem   = null; // item open in modal
 
-function save(){ localStorage.setItem('ds-checked-v2', JSON.stringify(checked)); }
-function getKey(ci, ii){ return ci+'-'+ii; }
+function save(){ localStorage.setItem('ds-checked', JSON.stringify(checked)); }
+function saveUD(){ localStorage.setItem('ds-userdata', JSON.stringify(userData)); }
 
+function getKey(ci,ii){ return ci+'-'+ii; }
+
+// ── STATS ────────────────────────────────────────────────────────────────────
 function updateStats(){
   const total = DATA.reduce((s,c)=>s+c.items.length,0);
-  const done = Object.values(checked).filter(Boolean).length;
+  const done  = Object.values(checked).filter(Boolean).length;
   document.getElementById('cc').textContent = done;
   document.getElementById('tc').textContent = total;
   document.getElementById('pf').style.width = (done/total*100)+'%';
 }
 
-function toggle(key, el, e){
+// ── TOGGLE ───────────────────────────────────────────────────────────────────
+function toggle(key,el,e){
   if(e) e.stopPropagation();
   checked[key] = !checked[key];
   if(!checked[key]) delete checked[key];
   save();
   el.classList.toggle('checked', !!checked[key]);
-  el.querySelector('.checkbox').textContent = checked[key] ? '✓' : '';
+  el.querySelector('.checkbox').textContent = checked[key]?'✓':'';
   updateStats();
-  applyFilter();
+  applyFilters();
 }
 
 window.clearAll = function(){
   if(!confirm('Resetować wszystkie oznaczenia?')) return;
-  checked={};save();render();
-}
+  checked={};
+  save();
+  render();
+};
 
+// ── FILTER ───────────────────────────────────────────────────────────────────
 window.filterView = function(f){
-  currentFilter=f;applyFilter();
-}
+  currentFilter = f;
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('fb-'+f);
+  if(btn) btn.classList.add('active');
+  applyFilters();
+};
 
-function applyFilter(){
+function applyFilters(){
+  currentSearch = (document.getElementById('search-input').value||'').toLowerCase().trim();
+  currentDist   = parseInt(document.getElementById('dist-filter').value)||0;
+
+  let anyVisible = false;
   document.querySelectorAll('.item').forEach(el=>{
-    const c = el.classList.contains('checked');
-    if(currentFilter==='all') el.classList.remove('hidden');
-    else if(currentFilter==='done') el.classList.toggle('hidden',!c);
-    else if(currentFilter==='todo') el.classList.toggle('hidden',c);
+    const isChecked = el.classList.contains('checked');
+    const name = (el.dataset.name||'').toLowerCase();
+    const km   = parseInt(el.dataset.km)||0;
+
+    const passFilter = currentFilter==='all' || (currentFilter==='done'&&isChecked) || (currentFilter==='todo'&&!isChecked);
+    const passSearch = !currentSearch || name.includes(currentSearch);
+    const passDist   = currentDist===0 || km<=currentDist;
+
+    const show = passFilter && passSearch && passDist;
+    el.classList.toggle('hidden', !show);
+    if(show) anyVisible=true;
   });
+
+  // hide empty sections
   document.querySelectorAll('.category-section').forEach(sec=>{
-    const v = sec.querySelectorAll('.item:not(.hidden)').length;
-    sec.classList.toggle('hidden', v===0 && currentFilter!=='all');
+    const vis = sec.querySelectorAll('.item:not(.hidden)').length;
+    sec.classList.toggle('hidden', vis===0);
   });
+
+  // no results msg
+  let noRes = document.getElementById('no-results');
+  if(!anyVisible){
+    if(!noRes){ noRes=document.createElement('div'); noRes.id='no-results'; noRes.className='no-results'; noRes.textContent='Brak wyników — zmień filtry lub wyszukiwanie'; document.getElementById('app').appendChild(noRes); }
+    noRes.style.display='block';
+  } else if(noRes){ noRes.style.display='none'; }
 }
 
-function openModal(item){
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(item, key){
+  currentItem = {item, key};
   document.getElementById('modal-title').textContent = item.name;
-  const mapsUrl = 'https://www.google.com/maps/search/'+encodeURIComponent(item.name+' Dolny Śląsk');
+
+  // nav
+  const mapsUrl='https://www.google.com/maps/dir/Iwiny,+Dolny+%C5%9Al%C4%85sk/'+encodeURIComponent(item.name+' Dolny Śląsk');
   document.getElementById('modal-nav').href = mapsUrl;
+
+  // desc
   document.getElementById('modal-desc').textContent = item.desc;
-  const wrap = document.getElementById('modal-img-wrap');
-  wrap.innerHTML = '';
-  if (item.img) {
-    const imgEl = document.createElement('img');
-    imgEl.className = 'modal-img';
-    imgEl.src = 'https://wsrv.nl/?url=' + encodeURIComponent(item.img) + '&w=800&output=jpg';
-    imgEl.alt = item.name;
-    imgEl.onerror = function() { this.parentNode.innerHTML = '<div class="modal-img-placeholder">🏔️</div>'; };
-    wrap.appendChild(imgEl);
-  } else {
-    wrap.innerHTML = '<div class="modal-img-placeholder">🏔️</div>';
-  }
+
+  // img
+  const wrap=document.getElementById('modal-img-wrap'); wrap.innerHTML='';
+  if(item.img){
+    const img=document.createElement('img'); img.className='modal-img'; img.src=item.img; img.alt=item.name;
+    img.onerror=function(){ this.parentNode.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; };
+    wrap.appendChild(img);
+  } else { wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; }
+
+  // user data
+  const ud = userData[key]||{};
+
+  // stars
+  const rating = ud.rating||0;
+  document.querySelectorAll('.star').forEach(s=>{
+    s.classList.toggle('active', parseInt(s.dataset.v)<=rating);
+  });
+
+  // date
+  document.getElementById('modal-date').value = ud.date||'';
+
+  // note
+  document.getElementById('modal-note').value = ud.note||'';
+
+  // photos url
+  const photosUrl = ud.photos||'';
+  document.getElementById('modal-photos-url').value = photosUrl;
+  const photosBtn = document.getElementById('modal-photos-btn');
+  photosBtn.classList.toggle('has-photos', !!photosUrl);
+
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
 
 window.closeModal = function(e){
-  if(e.target===document.getElementById('overlay')) closeModalBtn();
-}
-window.closeModalBtn = function(){
+  if(e&&e.target!==document.getElementById('overlay')) return;
+  _closeModal();
+};
+window.closeModalBtn = function(){ _closeModal(); };
+function _closeModal(){
   document.getElementById('overlay').classList.remove('open');
   document.body.style.overflow='';
+  currentItem=null;
 }
 
-let globalIdx = 1;
+// Photos button
+window.openPhotos = function(){
+  if(!currentItem) return;
+  const ud = userData[currentItem.key]||{};
+  if(ud.photos){ window.open(ud.photos,'_blank'); }
+  else { alert('Wklej link do albumu Google Photos w polu poniżej opisu, a potem kliknij ponownie.'); }
+};
 
+// Stars
+document.addEventListener('click', e=>{
+  if(!e.target.classList.contains('star')) return;
+  if(!currentItem) return;
+  const v = parseInt(e.target.dataset.v);
+  const key = currentItem.key;
+  if(!userData[key]) userData[key]={};
+  // toggle off if same rating clicked
+  userData[key].rating = userData[key].rating===v ? 0 : v;
+  saveUD();
+  const rating = userData[key].rating;
+  document.querySelectorAll('.star').forEach(s=>s.classList.toggle('active', parseInt(s.dataset.v)<=rating));
+  refreshItemBadges(key);
+});
+
+// Save date/note/photos on change
+window.saveUserData = function(){
+  if(!currentItem) return;
+  const key = currentItem.key;
+  if(!userData[key]) userData[key]={};
+  userData[key].date   = document.getElementById('modal-date').value;
+  userData[key].note   = document.getElementById('modal-note').value;
+  userData[key].photos = document.getElementById('modal-photos-url').value;
+  saveUD();
+  const photosBtn = document.getElementById('modal-photos-btn');
+  photosBtn.classList.toggle('has-photos', !!userData[key].photos);
+  refreshItemBadges(key);
+};
+
+function refreshItemBadges(key){
+  const el = document.querySelector(`.item[data-key="${key}"]`);
+  if(!el) return;
+  const ud = userData[key]||{};
+  let starsEl = el.querySelector('.item-stars');
+  let noteEl  = el.querySelector('.item-note-badge');
+  if(ud.rating>0){
+    if(!starsEl){ starsEl=document.createElement('div'); starsEl.className='item-stars'; el.querySelector('.item-body').appendChild(starsEl); }
+    starsEl.textContent='★'.repeat(ud.rating)+'☆'.repeat(5-ud.rating);
+  } else if(starsEl){ starsEl.remove(); }
+  if(ud.note&&ud.note.trim()){
+    if(!noteEl){ noteEl=document.createElement('div'); noteEl.className='item-note-badge'; el.querySelector('.item-body').appendChild(noteEl); }
+    noteEl.textContent='📝 '+ud.note.slice(0,40)+(ud.note.length>40?'…':'');
+  } else if(noteEl){ noteEl.remove(); }
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+let globalIdx=1;
 function render(){
   globalIdx=1;
-  const app=document.getElementById('app');
-  app.innerHTML='';
+  const app=document.getElementById('app'); app.innerHTML='';
   DATA.forEach((cat,ci)=>{
-    const sec=document.createElement('div');
-    sec.className='category-section';
-    const header=document.createElement('div');
-    header.className='category-header';
+    const sec=document.createElement('div'); sec.className='category-section';
+    const header=document.createElement('div'); header.className='category-header';
     header.innerHTML=`<span>${cat.cat.split(' ')[0]}</span><h2>${cat.cat.replace(/^\S+ /,'')}</h2><span class="cat-count">${cat.items.length}</span><span class="cat-toggle">▾</span>`;
     header.addEventListener('click',()=>sec.classList.toggle('collapsed'));
-    const list=document.createElement('div');
-    list.className='items-list';
+    const list=document.createElement('div'); list.className='items-list';
+
     cat.items.forEach((item,ii)=>{
       const key=getKey(ci,ii);
       const isChecked=!!checked[key];
+      const ud=userData[key]||{};
       const idx=globalIdx++;
+
       const el=document.createElement('div');
       el.className='item'+(isChecked?' checked':'');
+      el.dataset.key=key;
+      el.dataset.name=item.name.toLowerCase();
+      el.dataset.km=item.km||0;
+
       el.innerHTML=`
         <span class="item-idx">${String(idx).padStart(2,'0')}</span>
         <span class="checkbox">${isChecked?'✓':''}</span>
         <div class="item-body">
           <div class="item-name">${item.name}</div>
-          <div class="item-short">${item.short}</div>
+          <div class="item-short">${item.short||item.desc||''}</div>
+          ${ud.rating>0?`<div class="item-stars">${'★'.repeat(ud.rating)}${'☆'.repeat(5-ud.rating)}</div>`:''}
+          ${ud.note?`<div class="item-note-badge">📝 ${ud.note.slice(0,40)}${ud.note.length>40?'…':''}</div>`:''}
           <div class="item-meta">
-            <span class="badge badge-dist">📍 ~${item.km} km</span>
-            <span class="badge badge-time">🚗 ${item.time}</span>
-            <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}])">📖 opis</button>
+            <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">📖 opis</button>
+            ${ud.photos?`<button class="info-btn photos-quick-btn" onclick="window.open('${ud.photos}','_blank')">📷 zdjęcia</button>`:''}
           </div>
         </div>`;
-      el.querySelector('.checkbox').addEventListener('click', e=>toggle(key,el,e));
-      el.querySelector('.item-name').addEventListener('click', e=>toggle(key,el,e));
+
+      el.querySelector('.checkbox').addEventListener('click',e=>toggle(key,el,e));
+      el.querySelector('.item-name').addEventListener('click',e=>toggle(key,el,e));
       list.appendChild(el);
     });
+
     sec.appendChild(header);
     sec.appendChild(list);
     app.appendChild(sec);
-    const d=document.createElement('div');
-    d.className='divider';
-    app.appendChild(d);
+    const div=document.createElement('div'); div.className='divider'; app.appendChild(div);
   });
-  updateStats();applyFilter();
+  updateStats();
+  applyFilters();
 }
+
+// init
 render();
 
-/* ════════════════════════════════════════════════
-   Rejestracja Service Workera (PWA – tryb offline)
-   ════════════════════════════════════════════════ */
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('SW zarejestrowany:', reg.scope))
-      .catch(err => console.warn('SW błąd:', err));
-  });
+// ══════════════════════════════════════════════════════
+// BADGES DEFINITION
+// ══════════════════════════════════════════════════════
+const BADGES = [
+  // Ogólne
+  {id:'first',    icon:'🌱', name:'Pierwsze kroki',   desc:'Zalicz pierwszą atrakcję',            check:(d,u)=>d>=1},
+  {id:'ten',      icon:'🥉', name:'Odkrywca',         desc:'Zalicz 10 atrakcji',                  check:(d,u)=>d>=10},
+  {id:'twenty5',  icon:'🥈', name:'Turysta',          desc:'Zalicz 25 atrakcji',                  check:(d,u)=>d>=25},
+  {id:'fifty',    icon:'🥇', name:'Weteran',          desc:'Zalicz 50 atrakcji',                  check:(d,u)=>d>=50},
+  {id:'all100',   icon:'👑', name:'Mistrz Sudetów',   desc:'Zalicz wszystkie 100 atrakcji',       check:(d,u)=>d>=100},
+  // Kategorie
+  {id:'castles',  icon:'🏰', name:'Rycerz',           desc:'Zalicz wszystkie zamki',              check:(d,u,cats)=>cats[0]===DATA[0].items.length},
+  {id:'peaks',    icon:'⛰️', name:'Zdobywca szczytów',desc:'Zalicz 5 szczytów',                  check:(d,u,cats)=>cats[1]>=5},
+  {id:'caves',    icon:'⛏️', name:'Górnik',           desc:'Zalicz wszystkie podziemia',          check:(d,u,cats)=>cats[5]===DATA[5].items.length},
+  {id:'wroclaw',  icon:'🏛️', name:'Wrocławianin',    desc:'Zalicz wszystkie atrakcje Wrocławia', check:(d,u,cats)=>cats[4]===DATA[4].items.length},
+  {id:'korona',   icon:'👑', name:'Zdobywca Korony',  desc:'Zalicz wszystkie szczyty Korony Sudetów', check:(d,u,cats)=>cats[9]===DATA[9].items.length},
+  // Oceny
+  {id:'critic',   icon:'⭐', name:'Krytyk',           desc:'Oceń 10 miejsc',                      check:(d,u)=>Object.values(u).filter(x=>x.rating>0).length>=10},
+  {id:'top5',     icon:'💎', name:'Koneser',          desc:'Daj 5 gwiazdek 5 miejscom',           check:(d,u)=>Object.values(u).filter(x=>x.rating===5).length>=5},
+  // Notatki
+  {id:'writer',   icon:'📝', name:'Kronikarz',        desc:'Dodaj notatki do 5 miejsc',           check:(d,u)=>Object.values(u).filter(x=>x.note&&x.note.trim()).length>=5},
+  // Zdjęcia
+  {id:'photo5',   icon:'📷', name:'Fotograf',         desc:'Dodaj zdjęcia do 5 wypraw',           check:(d,u)=>Object.values(u).filter(x=>x.photos&&x.photos.trim()).length>=5},
+  // Specjalne
+  {id:'explorer', icon:'🗺️', name:'Podróżnik',       desc:'Zalicz atrakcje z 5 różnych kategorii', check:(d,u,cats)=>cats.filter(c=>c>0).length>=5},
+  {id:'note_nav', icon:'🧭', name:'Nawigator',        desc:'Zalicz atrakcje z każdej kategorii',  check:(d,u,cats)=>cats.filter(c=>c>0).length>=10},
+];
+
+// ══════════════════════════════════════════════════════
+// STATS PANEL
+// ══════════════════════════════════════════════════════
+window.toggleStats = function(){
+  const panel = document.getElementById('stats-panel');
+  const btn   = document.getElementById('stats-btn');
+  const open  = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  btn.classList.toggle('active', open);
+  if(open) renderStats();
+};
+
+function renderStats(){
+  const total = DATA.reduce((s,c)=>s+c.items.length, 0);
+  const done  = Object.values(checked).filter(Boolean).length;
+  const pct   = Math.round(done/total*100);
+
+  // per-category counts
+  const catDone = DATA.map((cat,ci)=>
+    cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length
+  );
+
+  // ratings
+  const allRatings = Object.values(userData).filter(u=>u.rating>0);
+  const avgRating  = allRatings.length ? (allRatings.reduce((s,u)=>s+u.rating,0)/allRatings.length).toFixed(1) : '—';
+
+  // ── Overall cards ──
+  const ov = document.getElementById('stats-overall');
+  ov.innerHTML = `
+    <div class="stat-card"><div class="stat-card-num">${done}</div><div class="stat-card-label">Zaliczonych</div></div>
+    <div class="stat-card"><div class="stat-card-num">${total-done}</div><div class="stat-card-label">Pozostało</div></div>
+    <div class="stat-card"><div class="stat-card-num">${pct}%</div><div class="stat-card-label">Ukończono</div></div>
+    <div class="stat-card"><div class="stat-card-num">${allRatings.length}</div><div class="stat-card-label">Ocenionych</div></div>
+    <div class="stat-card"><div class="stat-card-num">${avgRating}</div><div class="stat-card-label">Śr. ocena ★</div></div>
+    <div class="stat-card"><div class="stat-card-num">${Object.values(userData).filter(u=>u.note&&u.note.trim()).length}</div><div class="stat-card-label">Notatek</div></div>
+    <div class="stat-card"><div class="stat-card-num">${Object.values(userData).filter(u=>u.photos&&u.photos.trim()).length}</div><div class="stat-card-label">Albumów</div></div>
+  `;
+
+  // ── Category bars ──
+  const catsEl = document.getElementById('stats-cats');
+  catsEl.innerHTML = DATA.map((cat,ci)=>{
+    const d = catDone[ci];
+    const t = cat.items.length;
+    const w = Math.round(d/t*100);
+    const icon = cat.cat.split(' ')[0];
+    const name = cat.cat.replace(/^\S+ /,'');
+    return `<div class="cat-bar-row">
+      <span class="cat-bar-icon">${icon}</span>
+      <span class="cat-bar-name">${name}</span>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${w}%"></div></div>
+      <span class="cat-bar-count">${d}/${t}</span>
+    </div>`;
+  }).join('');
+
+  // ── Ratings summary ──
+  const ratEl = document.getElementById('stats-ratings');
+  if(allRatings.length === 0){
+    ratEl.innerHTML='<div style="color:var(--muted);font-size:.82rem;">Brak ocen — oceń miejsca w opisie atrakcji ⭐</div>';
+  } else {
+    const dist = [5,4,3,2,1].map(v=>({v, count:allRatings.filter(u=>u.rating===v).length}));
+    const distHtml = '<div class="ratings-summary">'+dist.map(({v,count})=>
+      `<div class="rating-row"><span class="rating-stars">${'★'.repeat(v)}</span><span class="rating-count">${count}×</span></div>`
+    ).join('')+'</div>';
+
+    // Top rated
+    const topRated = [];
+    DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+      const ud = userData[getKey(ci,ii)];
+      if(ud&&ud.rating>0) topRated.push({name:item.name, rating:ud.rating});
+    }));
+    topRated.sort((a,b)=>b.rating-a.rating);
+    const topHtml = topRated.length ? '<div class="top-rated-list">'+
+      topRated.slice(0,5).map(t=>`<div class="top-rated-item"><span class="tr-stars">${'★'.repeat(t.rating)}</span><span class="tr-name">${t.name}</span></div>`).join('')+
+      '</div>' : '';
+
+    ratEl.innerHTML = distHtml + topHtml;
+  }
+
+  // ── Badges ──
+  const badgesEl = document.getElementById('stats-badges');
+  badgesEl.innerHTML = BADGES.map(b=>{
+    const earned = b.check(done, userData, catDone);
+    const cls = earned ? 'badge-card earned' : 'badge-card locked';
+    // progress hint for count-based badges
+    let prog = '';
+    if(!earned){
+      if(b.id==='ten')     prog = `${done}/10`;
+      if(b.id==='twenty5') prog = `${done}/25`;
+      if(b.id==='fifty')   prog = `${done}/50`;
+      if(b.id==='all100')  prog = `${done}/100`;
+      if(b.id==='critic')  prog = `${Object.values(userData).filter(x=>x.rating>0).length}/10`;
+      if(b.id==='top5')    prog = `${Object.values(userData).filter(x=>x.rating===5).length}/5`;
+      if(b.id==='writer')  prog = `${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/5`;
+      if(b.id==='photo5')  prog = `${Object.values(userData).filter(x=>x.photos).length}/5`;
+      if(b.id==='explorer')prog = `${catDone.filter(c=>c>0).length}/5 kategorii`;
+      if(b.id==='note_nav')prog = `${catDone.filter(c=>c>0).length}/10 kategorii`;
+    }
+    return `<div class="${cls}">
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+      ${prog?`<div class="badge-progress">${prog}</div>`:''}
+      ${earned?'<div class="badge-progress" style="color:var(--gold)">✓ Zdobyta!</div>':''}
+    </div>`;
+  }).join('');
 }
 
-/* Baner "Zainstaluj jako aplikację" – pojawia się raz po 10s */
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  setTimeout(() => {
-    if (!deferredPrompt) return;
-    const banner = document.createElement('div');
-    banner.style.cssText = `
-      position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);
-      background:#1a1a2e;color:#f5f0e8;padding:.7rem 1.2rem;
-      border-radius:8px;font-family:Lato,sans-serif;font-size:.82rem;
-      display:flex;align-items:center;gap:.8rem;z-index:9999;
-      box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:90vw;
-    `;
-    banner.innerHTML = `
-      <span>📱 Zainstaluj jako aplikację</span>
-      <button id="pwa-install" style="background:#c9a84c;color:#1a1a2e;border:none;
-        padding:.35rem .8rem;border-radius:4px;font-weight:700;cursor:pointer;font-size:.78rem;">
-        Zainstaluj
-      </button>
-      <button id="pwa-dismiss" style="background:transparent;color:rgba(245,240,232,.5);
-        border:none;cursor:pointer;font-size:1.1rem;line-height:1;">✕</button>
-    `;
-    document.body.appendChild(banner);
-    document.getElementById('pwa-install').onclick = () => {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => { deferredPrompt = null; banner.remove(); });
-    };
-    document.getElementById('pwa-dismiss').onclick = () => banner.remove();
-  }, 10000);
-});
 </script>
 </body>
 </html>
