@@ -1300,12 +1300,33 @@ function openModal(item, key){
     kidsEl.style.display='none';
   }
 
-  // img
-  const wrap=document.getElementById('modal-img-wrap'); wrap.innerHTML='';
+  // img - load via Wikipedia CORS API to bypass hotlink protection
+  const wrap=document.getElementById('modal-img-wrap');
+  wrap.innerHTML='<div class="modal-img-placeholder" style="font-size:1.5rem;color:var(--muted)">⏳</div>';
   if(item.img){
-    const img=document.createElement('img'); img.className='modal-img'; img.src=item.img; img.alt=item.name; img.referrerPolicy='no-referrer';
-    img.onerror=function(){ this.parentNode.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; };
-    wrap.appendChild(img);
+    const filename = item.img.split('/').filter(p=>p.match(/\.(jpg|png|jpeg|JPG|PNG|svg)/i) && !p.match(/^\d+px-/)).pop();
+    if(filename){
+      const apiUrl = 'https://en.wikipedia.org/w/api.php?action=query&titles=File:'+encodeURIComponent(filename)+'&prop=imageinfo&iiprop=url&iiurlwidth=600&format=json&origin=*';
+      fetch(apiUrl)
+        .then(r=>r.json())
+        .then(data=>{
+          const pages = data.query.pages;
+          const page = Object.values(pages)[0];
+          const thumbUrl = page.imageinfo && page.imageinfo[0].thumburl;
+          const img=document.createElement('img');
+          img.className='modal-img';
+          img.alt=item.name;
+          img.onerror=function(){ wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; };
+          wrap.innerHTML='';
+          const finalUrl = thumbUrl || page.imageinfo[0].url;
+          img.src = finalUrl;
+          item._cachedImg = finalUrl;  // cache for print journal
+          wrap.appendChild(img);
+        })
+        .catch(()=>{ wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; });
+    } else {
+      wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>';
+    }
   } else { wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; }
 
   const ud = userData[key]||{};
@@ -1713,7 +1734,8 @@ window.printJournal = function(){
       </div>`;
 
     if(item.img){
-      html += `<img class="pj-img" src="${item.img}" alt="${item.name}" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
+      const printSrc = item._cachedImg || item.img;
+      html += `<img class="pj-img" src="${printSrc}" alt="${item.name}" onerror="this.style.display='none'">`;
     }
 
     html += `<div class="pj-desc-label">O tym miejscu</div>
