@@ -2,9 +2,21 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="referrer" content="no-referrer">
 <title>Atrakcje Dolnego Śląska</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dolny Śląsk">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Osobista lista odkryć Dolnego Śląska – zamki, góry, jaskinie i więcej.">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
@@ -416,12 +428,66 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
 .map-ctrl-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
 #leaflet-map{width:100%;height:420px;border-radius:4px;border:1px solid rgba(0,0,0,.1);}
 @media(max-width:599px){#leaflet-map{height:300px;}}
+
+/* ── DARK MODE ── */
+body.dark-mode {
+  --ink: #e8e3d8;
+  --paper: #1a1a2e;
+  --parchment: #232338;
+  --accent: #c9706a;
+  --gold: #c9a84c;
+  --moss: #7ab87a;
+  --sky: #7ab8d8;
+  --muted: #8a8898;
+  --checked-bg: #1e2e1e;
+}
+body.dark-mode header { background: #0f0f1e; }
+body.dark-mode .modal { background: var(--paper); }
+body.dark-mode .weather-day { background: #2a2a42; }
+body.dark-mode .nearby-item { background: var(--parchment); }
+body.dark-mode .nearby-item:hover { background: #2e2e48; }
+body.dark-mode #search-input,
+body.dark-mode #dist-filter,
+body.dark-mode #sort-filter { background: var(--parchment); color: var(--ink); }
+body.dark-mode .modal-input { background: #232338; color: var(--ink); border-color: rgba(255,255,255,.15); }
+body.dark-mode .stat-card { background: #232338; }
+body.dark-mode .badge-card { background: #232338; }
+body.dark-mode .planner-route-item { background: #232338; }
+body.dark-mode .planner-summary { background: #232338; }
+body.dark-mode .weekend-suggestion { background: #232338; }
+body.dark-mode .timeline-entry:hover { background: #232338; }
+body.dark-mode .heatmap-cell { border-color: rgba(255,255,255,.08); }
+body.dark-mode .data-section { background: #232338; }
+body.dark-mode .px-box { background: #232338; }
+body.dark-mode .act-btn { color: var(--muted); border-color: rgba(255,255,255,.15); }
+body.dark-mode .act-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+body.dark-mode .modal-img-placeholder { background: linear-gradient(135deg, #232338, #2a2a42); }
+
+/* Przycisk dark mode */
+#dark-toggle { font-size: .85rem; padding: .32rem .5rem; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--ink); }
+body.dark-mode #dark-toggle { background: var(--ink); color: var(--paper); }
+
+/* ── WŁASNE ZDJĘCIE ── */
+.modal-img-actions { display:flex; gap:.4rem; margin:.3rem 0; flex-wrap:wrap; }
+.img-action-btn { font-size:.6rem; font-weight:700; letter-spacing:.06em; padding:.2rem .55rem; border-radius:2px; cursor:pointer; border:1.5px solid rgba(0,0,0,.15); background:none; color:var(--muted); font-family:'Lato',sans-serif; transition:all .15s; text-transform:uppercase; }
+.img-action-btn:hover { border-color:var(--ink); color:var(--ink); }
+.img-action-btn.danger { border-color:var(--accent); color:var(--accent); }
+
+/* ── SHARE BUTTONS ── */
+.modal-share-row { display:flex; gap:.4rem; margin-top:.6rem; flex-wrap:wrap; }
+.share-btn { font-size:.68rem; font-weight:700; letter-spacing:.06em; padding:.32rem .7rem; border-radius:3px; cursor:pointer; border:none; font-family:'Lato',sans-serif; display:flex; align-items:center; gap:.3rem; transition:all .15s; text-transform:uppercase; }
+.share-wa { background:#25D366; color:white; }
+.share-wa:hover { background:#1da851; }
+.share-copy { background:var(--parchment); color:var(--ink); border:1.5px solid rgba(0,0,0,.15); }
+.share-copy:hover { background:var(--ink); color:var(--paper); }
+.share-copied { background:var(--moss); color:white; }
 </style>
 </head>
 <body>
 <header>
   <h1>Atrakcje <span>Dolnego Śląska</span></h1>
   <p class="subtitle">Osobista lista odkryć · odległości z Wrocławia</p>
+  <button id="dark-toggle" onclick="toggleDarkMode()" title="Tryb ciemny" style="position:absolute;top:.8rem;right:.8rem;">🌙</button>
 </header>
 <div id="pixabay-setup" style="display:none;">
   <div class="px-box">
@@ -670,6 +736,15 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
           <button class="modal-photos-btn" id="modal-photos-btn" onclick="openPhotos()">📷 Zdjęcia</button>
         </div>
         <div id="modal-acts" style="margin:.3rem 0 .4rem;"></div>
+        <div class="modal-img-actions">
+          <button class="img-action-btn" onclick="chooseCustomPhoto()">📷 Własne zdjęcie</button>
+          <button class="img-action-btn danger" id="remove-photo-btn" onclick="removeCustomPhoto()" style="display:none">✕ Usuń zdjęcie</button>
+        </div>
+        <input type="file" id="custom-photo-input" accept="image/*" style="display:none" onchange="loadCustomPhoto(event)">
+        <div class="modal-share-row">
+          <button class="share-btn share-wa" onclick="shareWhatsApp()">📲 WhatsApp</button>
+          <button class="share-btn share-copy" id="copy-btn" onclick="copyShareText()">📋 Kopiuj</button>
+        </div>
         <div class="modal-fuel-info" id="modal-fuel-info"></div>
         <div class="modal-weather" id="modal-weather" style="display:none;"></div>
         <div class="modal-desc" id="modal-desc"></div>
@@ -3296,6 +3371,159 @@ const _origToggle = toggle;
 window.toggle = function(key, el, e){
   _origToggle(key, el, e);
   if(leafletMap) updateMapMarkers();
+};
+
+
+// ── SERVICE WORKER REGISTRATION ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg=>console.log('SW zarejestrowany:', reg.scope))
+      .catch(err=>console.log('SW błąd:', err));
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// DARK MODE
+// ══════════════════════════════════════════════════════
+window.toggleDarkMode = function(){
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('dark-mode', isDark ? '1' : '');
+  document.getElementById('dark-toggle').textContent = isDark ? '☀️' : '🌙';
+};
+
+// Init dark mode from localStorage
+(function initDarkMode(){
+  if(localStorage.getItem('dark-mode')){
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('dark-toggle');
+    if(btn) btn.textContent = '☀️';
+  }
+})();
+
+// ══════════════════════════════════════════════════════
+// WŁASNE ZDJĘCIE
+// ══════════════════════════════════════════════════════
+window.chooseCustomPhoto = function(){
+  document.getElementById('custom-photo-input').click();
+};
+
+window.loadCustomPhoto = function(event){
+  const file = event.target.files[0];
+  if(!file || !currentItem) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const base64 = e.target.result;
+    // Zapisz w userData
+    const key = currentItem.key;
+    if(!userData[key]) userData[key] = {};
+    userData[key].customPhoto = base64;
+    saveUD();
+    // Pokaż zdjęcie w modalu
+    const wrap = document.getElementById('modal-img-wrap');
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.className = 'modal-img';
+    img.src = base64;
+    img.style.objectFit = 'cover';
+    wrap.appendChild(img);
+    document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+    // Cache dla print journal
+    currentItem.item._cachedImg = base64;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+};
+
+window.removeCustomPhoto = function(){
+  if(!currentItem) return;
+  const key = currentItem.key;
+  if(userData[key]) delete userData[key].customPhoto;
+  saveUD();
+  document.getElementById('remove-photo-btn').style.display = 'none';
+  // Przeładuj zdjęcie z Pixabay
+  const wrap = document.getElementById('modal-img-wrap');
+  wrap.innerHTML = '<div class="modal-img-placeholder">🏔️</div>';
+  currentItem.item._cachedImg = null;
+  // Re-trigger Pixabay load
+  const pxKey = localStorage.getItem('pixabay-key');
+  if(pxKey) openModal(currentItem.item, currentItem.key);
+};
+
+// Patch openModal to show custom photo if available
+const _origOpenModalCustom = openModal;
+window.openModal = function(item, key){
+  _origOpenModalCustom(item, key);
+  // Show/hide remove button based on custom photo
+  const ud = userData[key] || {};
+  const removeBtn = document.getElementById('remove-photo-btn');
+  if(removeBtn) removeBtn.style.display = ud.customPhoto ? 'inline-flex' : 'none';
+  // If custom photo exists, override with it
+  if(ud.customPhoto){
+    const wrap = document.getElementById('modal-img-wrap');
+    wrap.innerHTML = '';
+    const img = document.createElement('img');
+    img.className = 'modal-img';
+    img.src = ud.customPhoto;
+    img.style.objectFit = 'cover';
+    wrap.appendChild(img);
+    item._cachedImg = ud.customPhoto;
+  }
+};
+
+// ══════════════════════════════════════════════════════
+// SHARE - WhatsApp i Kopiuj
+// ══════════════════════════════════════════════════════
+function buildShareText(item, key){
+  const ud = userData[key] || {};
+  const stars = ud.rating ? '⭐'.repeat(ud.rating) : '';
+  const note  = ud.note   ? `\n💬 "${ud.note}"` : '';
+  const date  = ud.date   ? `\n📅 ${ud.date}` : '';
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Dolny Śląsk')}`;
+
+  return `🏔️ *${item.name}*${stars ? ' ' + stars : ''}
+📍 ${item.short || ''}
+🚗 ${item.km || '?'} km z Wrocławia · ${item.time || ''}${date}${note}
+🗺️ Nawiguj: ${mapsUrl}
+
+_Wysłano z Atrakcje Dolnego Śląska_`;
+}
+
+window.shareWhatsApp = function(){
+  if(!currentItem) return;
+  const text = buildShareText(currentItem.item, currentItem.key);
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+};
+
+window.copyShareText = function(){
+  if(!currentItem) return;
+  const text = buildShareText(currentItem.item, currentItem.key);
+  const btn = document.getElementById('copy-btn');
+  navigator.clipboard.writeText(text)
+    .then(()=>{
+      btn.textContent = '✓ Skopiowano!';
+      btn.classList.add('share-copied');
+      btn.classList.remove('share-copy');
+      setTimeout(()=>{
+        btn.textContent = '📋 Kopiuj';
+        btn.classList.remove('share-copied');
+        btn.classList.add('share-copy');
+      }, 2500);
+    })
+    .catch(()=>{
+      // Fallback dla starszych przeglądarek
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.textContent = '✓ Skopiowano!';
+      btn.classList.add('share-copied');
+      setTimeout(()=>{ btn.textContent = '📋 Kopiuj'; btn.classList.remove('share-copied'); btn.classList.add('share-copy'); }, 2500);
+    });
 };
 
 
