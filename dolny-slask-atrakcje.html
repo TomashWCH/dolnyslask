@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
 <title>Atrakcje Dolnego Śląska</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#1a1a2e;--paper:#f5f0e8;--parchment:#ede8d8;--accent:#8b2c2c;--gold:#c9a84c;--moss:#4a6741;--sky:#4a7fa5;--muted:#8a8070;--checked-bg:#eaf5ea;}
@@ -204,8 +205,8 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   button#act-filter-btn{padding:.35rem .5rem;}
   button#fuel-btn .btn-label{display:none;}
   button#fuel-btn{padding:.35rem .5rem;}
-  button#geo-btn .btn-label{display:none;}
-  button#geo-btn{padding:.35rem .5rem;}
+  button#map-btn .btn-label{display:none;}
+  button#map-btn{padding:.35rem .5rem;}
   button#weekend-btn .btn-label{display:none;}
   button#weekend-btn{padding:.35rem .5rem;}
 }
@@ -404,6 +405,38 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   #btn-activity,#btn-fuel,#btn-weekend,#btn-data{display:none!important;}
   .more-menu-wrap{display:inline-block;}
 }
+
+/* ── HISTORIA WYJAZDÓW ── */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.timeline-month{margin-bottom:1.2rem;}
+.timeline-month-header{font-size:.65rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.3rem 0 .5rem;border-bottom:1px solid rgba(0,0,0,.08);margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center;}
+.timeline-month-count{background:var(--parchment);padding:.1rem .5rem;border-radius:8px;font-size:.62rem;}
+.timeline-entry{display:flex;gap:.7rem;align-items:flex-start;padding:.45rem .5rem;border-radius:3px;cursor:pointer;transition:background .15s;}
+.timeline-entry:hover{background:var(--parchment);}
+.timeline-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:.35rem;}
+.timeline-body{flex:1;min-width:0;}
+.timeline-name{font-size:.82rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.timeline-meta{font-size:.68rem;color:var(--muted);margin-top:.1rem;}
+.timeline-stars{font-size:.68rem;color:#f0b429;margin-left:.3rem;}
+.timeline-note{font-size:.68rem;color:var(--muted);font-style:italic;margin-top:.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.timeline-empty{font-size:.82rem;color:var(--muted);font-style:italic;padding:.5rem 0;}
+.timeline-date-badge{font-size:.62rem;background:rgba(201,168,76,.15);color:#8a6a10;padding:.1rem .45rem;border-radius:8px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+
+/* ── MAPA LEAFLET ── */
+#map-panel{background:var(--paper);border-bottom:3px solid var(--moss);}
+.map-panel-inner{max-width:900px;margin:0 auto;padding:1rem 1.5rem 1.5rem;}
+.map-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+.map-panel-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;}
+.map-panel-close{background:none;border:1.5px solid var(--muted);color:var(--muted);width:28px;height:28px;cursor:pointer;border-radius:50%;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.map-panel-close:hover{border-color:var(--accent);color:var(--accent);}
+.map-legend{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;}
+.map-legend-item{font-size:.65rem;display:flex;align-items:center;gap:.25rem;}
+.map-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.map-controls{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem;}
+.map-ctrl-btn{font-size:.7rem;font-weight:700;padding:.28rem .65rem;border:1.5px solid rgba(0,0,0,.15);background:none;cursor:pointer;border-radius:10px;font-family:'Lato',sans-serif;transition:all .15s;}
+.map-ctrl-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+#leaflet-map{width:100%;height:420px;border-radius:4px;border:1px solid rgba(0,0,0,.1);}
+@media(max-width:599px){#leaflet-map{height:300px;}}
 </style>
 </head>
 <body>
@@ -436,6 +469,7 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
       <button onclick="toggleKids()" id="fb-kids" class="fb">👶 <span class="btn-label">Rodzinne</span></button>
       <button class="danger" onclick="clearAll()">↺ <span class="btn-label">Resetuj</span></button>
       <button onclick="toggleStats()" id="stats-btn">📊 <span class="btn-label">Statystyki</span></button>
+      <button onclick="toggleMap()" id="map-btn">🗺️ <span class="btn-label">Mapa</span></button>
       <button onclick="togglePlanner()" id="planner-btn">🗺️ <span class="btn-label">Planer</span> <span id="planner-count-badge" class="planner-count-badge" style="display:none">0</span></button>
       <button onclick="toggleActivityFilter()" id="act-filter-btn">🎯 <span class="btn-label">Aktywność</span></button>
       <button onclick="toggleWeekend()" id="weekend-btn">🗓️ <span class="btn-label">Weekend</span></button>
@@ -521,6 +555,12 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
     <div class="stats-section">
       <div class="stats-section-title">Mapa regionów</div>
       <div class="heatmap-grid" id="stats-heatmap"></div>
+    </div>
+
+    <!-- Historia wyjazdów -->
+    <div class="stats-section">
+      <div class="stats-section-title">Historia wyjazdów</div>
+      <div id="stats-timeline"></div>
     </div>
 
     <!-- Badges -->
@@ -613,6 +653,23 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
       <button class="weekend-go-btn" onclick="planWeekend()">🔍 Szukaj najlepszych miejsc</button>
     </div>
     <div class="weekend-results" id="weekend-results"></div>
+  </div>
+</div>
+
+
+<div id="map-panel" style="display:none;">
+  <div class="map-panel-inner">
+    <div class="map-panel-header">
+      <h2 class="map-panel-title">🗺️ Mapa atrakcji</h2>
+      <button class="map-panel-close" onclick="toggleMap()">✕</button>
+    </div>
+    <div class="map-controls">
+      <button class="map-ctrl-btn active" onclick="mapFilter('all',this)">Wszystkie</button>
+      <button class="map-ctrl-btn" onclick="mapFilter('done',this)">✓ Zaliczone</button>
+      <button class="map-ctrl-btn" onclick="mapFilter('todo',this)">○ Do zrobienia</button>
+    </div>
+    <div class="map-legend" id="map-legend"></div>
+    <div id="leaflet-map"></div>
   </div>
 </div>
 
@@ -3038,6 +3095,243 @@ document.addEventListener('click', e=>{
     document.getElementById('more-menu-dropdown').classList.remove('open');
   }
 });
+
+// ══════════════════════════════════════════════════════
+// HISTORIA WYJAZDÓW
+// ══════════════════════════════════════════════════════
+function renderTimeline(){
+  const el = document.getElementById('stats-timeline');
+  if(!el) return;
+
+  // Collect all visited items with dates
+  const entries = [];
+  DATA.forEach((cat,ci)=>{
+    cat.items.forEach((item,ii)=>{
+      const key = getKey(ci,ii);
+      if(!checked[key]) return;
+      const ud = userData[key]||{};
+      entries.push({
+        item, key, ud,
+        catIcon: cat.cat.split(' ')[0],
+        catName: cat.cat.replace(/^\S+ /,''),
+        ci, ii,
+        date: ud.date || null,
+      });
+    });
+  });
+
+  if(entries.length===0){
+    el.innerHTML='<div class="timeline-empty">Brak zaliczonych miejsc. Zaznacz odwiedzone atrakcje aby zobaczyć historię.</div>';
+    return;
+  }
+
+  // Split into: with date and without date
+  const withDate = entries.filter(e=>e.date).sort((a,b)=>b.date.localeCompare(a.date));
+  const noDate   = entries.filter(e=>!e.date);
+
+  // Group by month
+  const months = {};
+  withDate.forEach(e=>{
+    const d = new Date(e.date+'T12:00:00');
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('pl-PL',{year:'numeric',month:'long'});
+    if(!months[key]) months[key]={label, entries:[]};
+    months[key].entries.push(e);
+  });
+
+  let html = '';
+
+  // Render months
+  Object.keys(months).sort((a,b)=>b.localeCompare(a)).forEach(mk=>{
+    const {label, entries: mes} = months[mk];
+    html += `<div class="timeline-month">
+      <div class="timeline-month-header">
+        <span>${label}</span>
+        <span class="timeline-month-count">${mes.length} miejsc${mes.length===1?'e':mes.length<5?'a':''}</span>
+      </div>`;
+    mes.forEach(e=>{
+      const d = new Date(e.date+'T12:00:00');
+      const dayStr = d.toLocaleDateString('pl-PL',{weekday:'short',day:'numeric'});
+      const stars = e.ud.rating ? '<span class="timeline-stars">'+'★'.repeat(e.ud.rating)+'</span>' : '';
+      const note  = e.ud.note ? `<div class="timeline-note">📝 ${e.ud.note}</div>` : '';
+      html += `<div class="timeline-entry" onclick="toggleStats();setTimeout(()=>openModal(DATA[${e.ci}].items[${e.ii}],'${e.key}'),300)">
+        <div class="timeline-dot"></div>
+        <div class="timeline-body">
+          <div class="timeline-name">${e.catIcon} ${e.item.name}${stars}</div>
+          <div class="timeline-meta">${e.catName} · ${e.item.km||'?'} km</div>
+          ${note}
+        </div>
+        <span class="timeline-date-badge">${dayStr}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  // Without date section
+  if(noDate.length>0){
+    html += `<div class="timeline-month">
+      <div class="timeline-month-header">
+        <span>Bez daty wizyty</span>
+        <span class="timeline-month-count">${noDate.length}</span>
+      </div>`;
+    noDate.forEach(e=>{
+      const stars = e.ud.rating ? '<span class="timeline-stars">'+'★'.repeat(e.ud.rating)+'</span>' : '';
+      html += `<div class="timeline-entry" onclick="toggleStats();setTimeout(()=>openModal(DATA[${e.ci}].items[${e.ii}],'${e.key}'),300)">
+        <div class="timeline-dot" style="background:var(--muted)"></div>
+        <div class="timeline-body">
+          <div class="timeline-name">${e.catIcon} ${e.item.name}${stars}</div>
+          <div class="timeline-meta">${e.catName} · ${e.item.km||'?'} km</div>
+        </div>
+        <span class="timeline-date-badge" style="background:rgba(0,0,0,.06);color:var(--muted)">brak daty</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  el.innerHTML = `<div class="timeline">${html}</div>`;
+}
+
+// Patch renderStats to include timeline
+const _origRenderStatsT = renderStats;
+window.renderStats = function(){
+  _origRenderStatsT();
+  renderTimeline();
+};
+
+// ══════════════════════════════════════════════════════
+// MAPA LEAFLET
+// ══════════════════════════════════════════════════════
+let leafletMap = null;
+let mapMarkers = [];
+let mapFilterMode = 'all';
+
+const CAT_COLORS = [
+  '#8b2c2c','#4a6741','#5a7751','#8a6a10',
+  '#4a7fa5','#6e5535','#3a7a3a','#a54a7f',
+  '#3a6f95','#c9a84c'
+];
+
+window.toggleMap = function(){
+  const panel = document.getElementById('map-panel');
+  const btn   = document.getElementById('map-btn');
+  const open  = panel.style.display==='none';
+  panel.style.display = open?'block':'none';
+  btn.classList.toggle('active', open);
+  if(open){
+    setTimeout(()=>initLeafletMap(), 100);
+  }
+};
+
+window.mapFilter = function(mode, btn){
+  mapFilterMode = mode;
+  document.querySelectorAll('.map-ctrl-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  updateMapMarkers();
+};
+
+function initLeafletMap(){
+  // Load Leaflet JS if not loaded
+  if(!window.L){
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = ()=>createMap();
+    document.head.appendChild(script);
+  } else {
+    createMap();
+  }
+}
+
+function createMap(){
+  if(leafletMap){
+    leafletMap.invalidateSize();
+    updateMapMarkers();
+    return;
+  }
+
+  leafletMap = L.map('leaflet-map', {
+    center: [50.85, 16.5],
+    zoom: 9,
+    zoomControl: true,
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 18,
+  }).addTo(leafletMap);
+
+  // Build legend
+  const legendEl = document.getElementById('map-legend');
+  legendEl.innerHTML = DATA.map((cat,ci)=>{
+    const icon = cat.cat.split(' ')[0];
+    const name = cat.cat.replace(/^\S+ /,'');
+    const color = CAT_COLORS[ci]||'#666';
+    return `<div class="map-legend-item"><div class="map-legend-dot" style="background:${color}"></div>${icon} ${name}</div>`;
+  }).join('');
+
+  updateMapMarkers();
+}
+
+function updateMapMarkers(){
+  if(!leafletMap || !window.L) return;
+
+  // Clear old markers
+  mapMarkers.forEach(m=>m.remove());
+  mapMarkers=[];
+
+  DATA.forEach((cat,ci)=>{
+    const color = CAT_COLORS[ci]||'#666';
+    const catIcon = cat.cat.split(' ')[0];
+
+    cat.items.forEach((item,ii)=>{
+      if(!item.lat||!item.lng) return;
+      const key = getKey(ci,ii);
+      const isDone = !!checked[key];
+
+      // Apply filter
+      if(mapFilterMode==='done' && !isDone) return;
+      if(mapFilterMode==='todo' && isDone) return;
+
+      const ud = userData[key]||{};
+      const stars = ud.rating ? '★'.repeat(ud.rating) : '';
+
+      // Custom circle marker
+      const marker = L.circleMarker([item.lat, item.lng], {
+        radius: isDone ? 9 : 6,
+        fillColor: isDone ? color : '#ccc',
+        color: isDone ? color : '#999',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: isDone ? 0.85 : 0.5,
+      });
+
+      const popupHtml = `
+        <div style="font-family:'Lato',sans-serif;min-width:180px;">
+          <div style="font-weight:700;font-size:.85rem;margin-bottom:.2rem">${catIcon} ${item.name}</div>
+          <div style="font-size:.72rem;color:#666;margin-bottom:.3rem">${cat.cat.replace(/^\S+ /,'')}</div>
+          ${isDone?`<div style="font-size:.72rem;color:green">✓ Zaliczone ${stars?'<span style="color:#f0b429">'+stars+'</span>':''}</div>`:'<div style="font-size:.72rem;color:#999">○ Niezaliczone</div>'}
+          ${ud.date?`<div style="font-size:.68rem;color:#888;margin-top:.15rem">📅 ${ud.date}</div>`:''}
+          ${ud.note?`<div style="font-size:.68rem;font-style:italic;color:#666;margin-top:.15rem">📝 ${ud.note.slice(0,60)}${ud.note.length>60?'…':''}</div>`:''}
+          <div style="margin-top:.4rem;font-size:.68rem;color:#888">📍 ${item.km||'?'} km z Wrocławia</div>
+          <button onclick="document.getElementById('map-panel').style.display='none';document.getElementById('map-btn').classList.remove('active');setTimeout(()=>openModal(DATA[${ci}].items[${ii}],'${key}'),200)"
+            style="margin-top:.5rem;width:100%;padding:.3rem;background:#1a1a2e;color:white;border:none;cursor:pointer;font-size:.72rem;font-family:'Lato',sans-serif;border-radius:2px;">
+            📖 Otwórz opis
+          </button>
+        </div>`;
+
+      marker.bindPopup(popupHtml, {maxWidth:220});
+      marker.addTo(leafletMap);
+      mapMarkers.push(marker);
+    });
+  });
+}
+
+// Refresh map markers when item is checked/unchecked
+const _origToggle = toggle;
+window.toggle = function(key, el, e){
+  _origToggle(key, el, e);
+  if(leafletMap) updateMapMarkers();
+};
+
 
 </script>
 </body>
