@@ -1773,13 +1773,7 @@ function renderStats(){
   const total = DATA.reduce((s,c)=>s+c.items.length, 0);
   const done  = Object.values(checked).filter(Boolean).length;
   const pct   = Math.round(done/total*100);
-
-  // per-category counts
-  const catDone = DATA.map((cat,ci)=>
-    cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length
-  );
-
-  // ratings
+  const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
   const allRatings = Object.values(userData).filter(u=>u.rating>0);
   const avgRating  = allRatings.length ? (allRatings.reduce((s,u)=>s+u.rating,0)/allRatings.length).toFixed(1) : '—';
 
@@ -1798,11 +1792,8 @@ function renderStats(){
   // ── Category bars ──
   const catsEl = document.getElementById('stats-cats');
   catsEl.innerHTML = DATA.map((cat,ci)=>{
-    const d = catDone[ci];
-    const t = cat.items.length;
-    const w = Math.round(d/t*100);
-    const icon = cat.cat.split(' ')[0];
-    const name = cat.cat.replace(/^\S+ /,'');
+    const d = catDone[ci], t = cat.items.length, w = Math.round(d/t*100);
+    const icon = cat.cat.split(' ')[0], name = cat.cat.replace(/^\S+ /,'');
     return `<div class="cat-bar-row">
       <span class="cat-bar-icon">${icon}</span>
       <span class="cat-bar-name">${name}</span>
@@ -1820,8 +1811,6 @@ function renderStats(){
     const distHtml = '<div class="ratings-summary">'+dist.map(({v,count})=>
       `<div class="rating-row"><span class="rating-stars">${'★'.repeat(v)}</span><span class="rating-count">${count}×</span></div>`
     ).join('')+'</div>';
-
-    // Top rated
     const topRated = [];
     DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
       const ud = userData[getKey(ci,ii)];
@@ -1829,30 +1818,88 @@ function renderStats(){
     }));
     topRated.sort((a,b)=>b.rating-a.rating);
     const topHtml = topRated.length ? '<div class="top-rated-list">'+
-      topRated.slice(0,5).map(t=>`<div class="top-rated-item"><span class="tr-stars">${'★'.repeat(t.rating)}</span><span class="tr-name">${t.name}</span></div>`).join('')+
-      '</div>' : '';
-
+      topRated.slice(0,5).map(t=>`<div class="top-rated-item"><span class="tr-stars">${'★'.repeat(t.rating)}</span><span class="tr-name">${t.name}</span></div>`).join('')+'</div>' : '';
     ratEl.innerHTML = distHtml + topHtml;
   }
+
+  // ── Km total ──
+  const kmEl = document.getElementById('stats-km');
+  if(kmEl){
+    let totalKm=0, totalTrips=0;
+    DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+      if(checked[getKey(ci,ii)] && item.km){ totalKm+=item.km*2; totalTrips++; }
+    }));
+    const avgKm = totalTrips ? Math.round(totalKm/totalTrips) : 0;
+    let fuelHtml='';
+    if(fuelPrice&&fuelBurn&&totalKm){
+      const cost=Math.round(totalKm*fuelBurn/100*fuelPrice);
+      fuelHtml=`<div class="stat-card"><div class="stat-card-num" style="font-size:1.4rem">~${cost} zł</div><div class="stat-card-label">Koszt paliwa łącznie</div></div>`;
+    }
+    kmEl.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.8rem">
+      <div class="stat-card"><div class="stats-km-total">${totalKm.toLocaleString('pl-PL')}</div><div class="stat-card-label">km łącznie (tam i z powrotem)</div></div>
+      <div class="stat-card"><div class="stat-card-num">${avgKm}</div><div class="stat-card-label">Średnio km / wycieczka</div></div>
+      <div class="stat-card"><div class="stat-card-num">${totalTrips}</div><div class="stat-card-label">Zaliczonych wycieczek</div></div>
+      ${fuelHtml}
+    </div>`;
+  }
+
+  // ── Heatmap ──
+  const hmEl = document.getElementById('stats-heatmap');
+  if(hmEl){
+    const regionColors=[
+      {color:'rgba(139,44,44,.15)',accent:'#8b2c2c'},{color:'rgba(74,103,65,.15)',accent:'#4a6741'},
+      {color:'rgba(74,103,65,.12)',accent:'#5a7751'},{color:'rgba(201,168,76,.15)',accent:'#8a6a10'},
+      {color:'rgba(74,127,165,.15)',accent:'#4a7fa5'},{color:'rgba(100,80,60,.15)',accent:'#6e5535'},
+      {color:'rgba(60,120,60,.15)',accent:'#3a7a3a'},{color:'rgba(165,74,127,.15)',accent:'#a54a7f'},
+      {color:'rgba(74,127,165,.12)',accent:'#3a6f95'},{color:'rgba(201,168,76,.2)',accent:'#c9a84c'},
+    ];
+    hmEl.innerHTML=DATA.map((cat,ci)=>{
+      const d=catDone[ci],t=cat.items.length,pct=Math.round(d/t*100);
+      const r=regionColors[ci]||{color:'rgba(0,0,0,.08)',accent:'#666'};
+      const intensity=Math.min(pct/100,1);
+      const bg=r.color.replace(/[\d.]+\)$/,(intensity*0.4+0.05)+')');
+      const icon=cat.cat.split(' ')[0],name=cat.cat.replace(/^\S+ /,'');
+      return `<div class="heatmap-cell" style="background:${bg};border-color:${r.accent}33;">
+        <span class="hm-count" style="color:${r.accent}">${d}/${t}</span>
+        <span class="hm-name" style="color:${r.accent}">${icon} ${name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Activity counts ──
+  const actCounts={};
+  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+    if(checked[getKey(ci,ii)]&&item.acts) item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
+  }));
 
   // ── Badges ──
   const badgesEl = document.getElementById('stats-badges');
   badgesEl.innerHTML = BADGES.map(b=>{
-    const earned = b.check(done, userData, catDone);
+    const earned = b.check(done, userData, catDone, actCounts);
     const cls = earned ? 'badge-card earned' : 'badge-card locked';
-    // progress hint for count-based badges
-    let prog = '';
+    let prog='';
     if(!earned){
-      if(b.id==='ten')     prog = `${done}/10`;
-      if(b.id==='twenty5') prog = `${done}/25`;
-      if(b.id==='fifty')   prog = `${done}/50`;
-      if(b.id==='all100')  prog = `${done}/100`;
-      if(b.id==='critic')  prog = `${Object.values(userData).filter(x=>x.rating>0).length}/10`;
-      if(b.id==='top5')    prog = `${Object.values(userData).filter(x=>x.rating===5).length}/5`;
-      if(b.id==='writer')  prog = `${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/5`;
-      if(b.id==='photo5')  prog = `${Object.values(userData).filter(x=>x.photos).length}/5`;
-      if(b.id==='explorer')prog = `${catDone.filter(c=>c>0).length}/5 kategorii`;
-      if(b.id==='note_nav')prog = `${catDone.filter(c=>c>0).length}/10 kategorii`;
+      if(b.id==='ten')       prog=`${done}/10`;
+      if(b.id==='twenty5')   prog=`${done}/25`;
+      if(b.id==='fifty')     prog=`${done}/50`;
+      if(b.id==='all100')    prog=`${done}/100`;
+      if(b.id==='critic')    prog=`${Object.values(userData).filter(x=>x.rating>0).length}/10`;
+      if(b.id==='top5')      prog=`${Object.values(userData).filter(x=>x.rating===5).length}/5`;
+      if(b.id==='writer')    prog=`${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/5`;
+      if(b.id==='notatnik')  prog=`${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/15`;
+      if(b.id==='photo5')    prog=`${Object.values(userData).filter(x=>x.photos).length}/5`;
+      if(b.id==='fotograf10')prog=`${Object.values(userData).filter(x=>x.photos).length}/10`;
+      if(b.id==='explorer')  prog=`${catDone.filter(c=>c>0).length}/5 kategorii`;
+      if(b.id==='note_nav')  prog=`${catDone.filter(c=>c>0).length}/10 kategorii`;
+      if(b.id==='allregions')prog=`${catDone.filter(c=>c>0).length}/10 kategorii`;
+      if(b.id==='all5cats')  prog=`${catDone.filter(c=>c>=3).length}/10 kategorii`;
+      if(b.id==='trekker')   prog=`${actCounts['trekking']||0}/10`;
+      if(b.id==='sightseer') prog=`${actCounts['zwiedzanie']||0}/15`;
+      if(b.id==='historian') prog=`${actCounts['historia']||0}/10`;
+      if(b.id==='km500'||b.id==='km2000'){
+        let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; }));
+        prog=`${km}/${b.id==='km500'?500:2000} km`;
+      }
     }
     return `<div class="${cls}">
       <div class="badge-icon">${b.icon}</div>
@@ -2268,12 +2315,6 @@ window.openModal = function(item, key){
 // ══════════════════════════════════════════════════════
 // STATS ENHANCEMENTS - km total + heatmap
 // ══════════════════════════════════════════════════════
-const _origRenderStats = renderStats;
-window.renderStats = function(){
-  _origRenderStats();
-  renderKmStats();
-  renderHeatmap();
-};
 
 function renderKmStats(){
   const el = document.getElementById('stats-km');
@@ -2376,65 +2417,6 @@ if(typeof BADGES !== 'undefined'){
 // PATCH renderStats to pass activity counts to badges
 // ══════════════════════════════════════════════════════
 // Override the badge rendering to include activity counts
-const _origRenderStats2 = window.renderStats;
-window.renderStats = function(){
-  // Call original (which calls _origRenderStats which calls renderKmStats/renderHeatmap)
-  _origRenderStats2();
-
-  // Re-render badges with activity data
-  const total = DATA.reduce((s,c)=>s+c.items.length, 0);
-  const done  = Object.values(checked).filter(Boolean).length;
-  const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
-
-  // Count activity types
-  const actCounts = {};
-  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
-    if(checked[getKey(ci,ii)] && item.acts){
-      item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
-    }
-  }));
-
-  const badgesEl = document.getElementById('stats-badges');
-  if(!badgesEl) return;
-  badgesEl.innerHTML = BADGES.map(b=>{
-    const earned = b.check(done, userData, catDone, actCounts);
-    const cls = earned ? 'badge-card earned' : 'badge-card locked';
-    let prog = '';
-    if(!earned){
-      if(b.id==='ten')      prog=`${done}/10`;
-      if(b.id==='twenty5')  prog=`${done}/25`;
-      if(b.id==='fifty')    prog=`${done}/50`;
-      if(b.id==='all100')   prog=`${done}/100`;
-      if(b.id==='critic')   prog=`${Object.values(userData).filter(x=>x.rating>0).length}/10`;
-      if(b.id==='top5')     prog=`${Object.values(userData).filter(x=>x.rating===5).length}/5`;
-      if(b.id==='writer')   prog=`${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/5`;
-      if(b.id==='notatnik') prog=`${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/15`;
-      if(b.id==='photo5')   prog=`${Object.values(userData).filter(x=>x.photos).length}/5`;
-      if(b.id==='fotograf10')prog=`${Object.values(userData).filter(x=>x.photos).length}/10`;
-      if(b.id==='explorer') prog=`${catDone.filter(c=>c>0).length}/5 kategorii`;
-      if(b.id==='note_nav') prog=`${catDone.filter(c=>c>0).length}/10 kategorii`;
-      if(b.id==='allregions')prog=`${catDone.filter(c=>c>0).length}/10 kategorii`;
-      if(b.id==='trekker')  prog=`${actCounts['trekking']||0}/10`;
-      if(b.id==='sightseer')prog=`${actCounts['zwiedzanie']||0}/15`;
-      if(b.id==='historian')prog=`${actCounts['historia']||0}/10`;
-      if(b.id==='km500'){
-        let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; }));
-        prog=`${km}/500 km`;
-      }
-      if(b.id==='km2000'){
-        let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; }));
-        prog=`${km}/2000 km`;
-      }
-    }
-    return `<div class="${cls}">
-      <div class="badge-icon">${b.icon}</div>
-      <div class="badge-name">${b.name}</div>
-      <div class="badge-desc">${b.desc}</div>
-      ${prog?`<div class="badge-progress">${prog}</div>`:''}
-      ${earned?'<div class="badge-progress" style="color:var(--gold)">✓ Zdobyta!</div>':''}
-    </div>`;
-  }).join('');
-};
 
 
 </script>
