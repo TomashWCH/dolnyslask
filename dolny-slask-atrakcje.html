@@ -1778,6 +1778,7 @@ function buildItemEl(item,ci,ii,key,isChecked,ud,isKids,idx){
   el.dataset.name=item.name.toLowerCase();
   el.dataset.km=item.km||0;
   el.dataset.kids=isKids?'1':'0';
+  el.dataset.idx=String(idx).padStart(2,'0');
 
   el.innerHTML=`
     <span class="item-idx">${String(idx).padStart(2,'0')}</span>
@@ -2548,13 +2549,23 @@ window.printJournal = function(){
   container.innerHTML = html;
   container.style.display = 'block';
 
-  setTimeout(() => {
+  // Bug fix #1: poczekaj na załadowanie wszystkich zdjęć przed drukiem
+  const images = Array.from(container.querySelectorAll('img.pj-img'));
+  const imageLoadPromises = images.map(img => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(resolve => {
+      img.onload = resolve;
+      img.onerror = () => { img.style.display = 'none'; resolve(); };
+    });
+  });
+
+  Promise.all(imageLoadPromises).then(() => {
     window.print();
     setTimeout(() => {
       container.style.display = 'none';
       container.innerHTML = '';
     }, 1000);
-  }, 300);
+  });
 };
 
 // ══════════════════════════════════════════════════════
@@ -3771,6 +3782,11 @@ window.toggle = function(key, el, e){
     // Sprawdź czy zdobyto nową odznakę
     checkNewBadges();
   }
+  // Bug fix #2: odśwież panel odznak jeśli jest otwarty
+  const statsPanel = document.getElementById('stats-panel');
+  if(statsPanel && statsPanel.style.display !== 'none') {
+    renderStats();
+  }
 };
 
 // ══════════════════════════════════════════════════════
@@ -3861,6 +3877,46 @@ function applyViewMode(){
   });
   // Rebuild items for card view (needs thumb)
   if(currentView==='card') rebuildCardItems();
+  // Bug fix #3: przebuduj itemy do struktury listowej po przełączeniu z card
+  if(currentView==='list') rebuildListItems();
+}
+
+// Przebudowuje itemy z card-view DOM do pełnej struktury list-view
+function rebuildListItems(){
+  document.querySelectorAll('.items-list.list-view .item').forEach(el=>{
+    // Jeśli item ma card-thumb, to jest w card-DOM — trzeba przebudować
+    if(!el.querySelector('.card-thumb')) return;
+    const key = el.dataset.key;
+    if(!key) return;
+    const [ci,ii] = key.split('-').map(Number);
+    const item = DATA[ci]?.items[ii];
+    if(!item) return;
+    const isChecked = el.classList.contains('checked');
+    const ud = userData[key]||{};
+    const isKids = el.dataset.kids === '1';
+    const inPlan = plannerItems.includes(key);
+    const idx = el.dataset.idx || '';
+
+    el.innerHTML = `
+      <span class="item-idx">${idx}</span>
+      <span class="checkbox">${isChecked?'✓':''}</span>
+      <div class="item-body">
+        <div class="item-name">${item.name}${isKids?' <span class="kids-badge">👶 Rodzinne</span>':''}</div>
+        <div class="item-short">${item.short||''}</div>
+        ${ud.rating>0?`<div class="item-stars">${'★'.repeat(ud.rating)}${'☆'.repeat(5-ud.rating)}</div>`:''}
+        ${ud.note?`<div class="item-note-badge">📝 ${ud.note.slice(0,40)}${ud.note.length>40?'…':''}</div>`:''}
+        <div class="item-meta">
+          ${item.km?`<span class="badge badge-dist">📍 ${item.km} km</span>`:''}
+          ${item.time?`<span class="badge badge-time">🕐 ${item.time}</span>`:''}
+          <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">📖 opis</button>
+          <button class="add-to-plan-btn${inPlan?' in-plan':''}" onclick="togglePlanItem('${key}',this)">+ Plan</button>
+          ${ud.photos?`<button class="info-btn photos-quick-btn" onclick="window.open('${ud.photos}','_blank')">📷 zdjęcia</button>`:''}
+        </div>
+      </div>`;
+
+    el.querySelector('.checkbox').addEventListener('click',e=>toggle(key,el,e));
+    el.querySelector('.item-name').addEventListener('click',e=>toggle(key,el,e));
+  });
 }
 
 function buildCardItemHTML(el, ci, ii, item, catEmoji){
