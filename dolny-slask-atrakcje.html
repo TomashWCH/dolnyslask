@@ -3861,53 +3861,121 @@ function applyViewMode(){
   if(currentView==='card') rebuildCardItems();
 }
 
+function buildCardItemHTML(el, ci, ii, item, catEmoji){
+  const key = el.dataset.key;
+  const ud = userData[key]||{};
+  const isChecked = !!checked[key];
+  const inPlan = plannerItems.includes(key);
+  const stars = ud.rating ? '★'.repeat(ud.rating) : '';
+  const kids = item.kids ? '<span class="kids-badge" style="font-size:.55rem;padding:.1rem .3rem;">👶</span>' : '';
+  const photo = ud.customPhoto || item._cachedImg || null;
+
+  el.innerHTML = `
+    <div class="card-thumb ct-${ci % 10}" id="thumb-${key}">
+      ${photo
+        ? `<img src="${photo}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`
+        : `<span class="card-thumb-emoji">${catEmoji}</span>`
+      }
+    </div>
+    <div class="card-body-wrap">
+      <div class="card-check-name">
+        <div class="card-chk">${isChecked?'✓':''}</div>
+        <div class="item-name" style="font-size:.8rem;line-height:1.25">${item.name}${kids}</div>
+      </div>
+      <div class="item-short" style="font-size:.66rem">${item.short||''}</div>
+      ${stars?`<div class="item-stars" style="font-size:.7rem">${stars}</div>`:''}
+      <div class="item-meta" style="margin-top:.25rem">
+        ${item.km?`<span class="badge badge-dist">📍 ${item.km} km</span>`:''}
+        <button class="add-to-plan-btn${inPlan?' in-plan':''}" onclick="togglePlanItem('${key}',this)">+ Plan</button>
+        <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">📖</button>
+      </div>
+    </div>`;
+
+  const chk = el.querySelector('.card-chk');
+  if(chk) chk.addEventListener('click', e=>toggle(key,el,e));
+  const nameEl = el.querySelector('.item-name');
+  if(nameEl) nameEl.addEventListener('click', e=>toggle(key,el,e));
+}
+
 function rebuildCardItems(){
   document.querySelectorAll('.items-list.card-view .item').forEach(el=>{
-    if(el.querySelector('.card-thumb')) return; // already built
+    if(el.querySelector('.card-thumb')) return;
     const key = el.dataset.key;
     const [ci,ii] = key.split('-').map(Number);
     const item = DATA[ci]?.items[ii];
     if(!item) return;
-    const ud = userData[key]||{};
-    const isChecked = !!checked[key];
-
-    // Rebuild inner HTML for card view
     const catEmoji = DATA[ci].cat.split(' ')[0];
-    const inPlan = plannerItems.includes(key);
-    const stars = ud.rating ? '★'.repeat(ud.rating) : '';
-    const kids = item.kids ? '<span class="kids-badge" style="font-size:.55rem;padding:.1rem .3rem;">👶</span>' : '';
-    const customPhoto = ud.customPhoto;
-
-    el.innerHTML = `
-      <div class="card-thumb ct-${ci % 10}">
-        ${customPhoto
-          ? `<img src="${customPhoto}" alt="${item.name}">`
-          : item._cachedImg
-            ? `<img src="${item._cachedImg}" alt="${item.name}">`
-            : `<span class="card-thumb-emoji">${catEmoji}</span>`
-        }
-      </div>
-      <div class="card-body-wrap">
-        <div class="card-check-name">
-          <div class="card-chk">${isChecked?'✓':''}</div>
-          <div class="item-name" style="font-size:.8rem;line-height:1.25">${item.name}${kids}</div>
-        </div>
-        <div class="item-short" style="font-size:.66rem">${item.short||''}</div>
-        ${stars?`<div class="item-stars" style="font-size:.7rem">${stars}</div>`:''}
-        <div class="item-meta" style="margin-top:.25rem">
-          ${item.km?`<span class="badge badge-dist">📍 ${item.km} km</span>`:''}
-          <button class="add-to-plan-btn${inPlan?' in-plan':''}" onclick="togglePlanItem('${key}',this)">+ Plan</button>
-          <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">📖</button>
-        </div>
-      </div>`;
-
-    // Re-attach checkbox click
-    const chk = el.querySelector('.card-chk');
-    if(chk) chk.addEventListener('click', e=>toggle(key,el,e));
-    const nameEl = el.querySelector('.item-name');
-    if(nameEl) nameEl.addEventListener('click', e=>toggle(key,el,e));
+    buildCardItemHTML(el, ci, ii, item, catEmoji);
   });
+  // Ładuj zdjęcia w tle dla widocznych kart
+  lazyLoadCardPhotos();
 }
+
+function lazyLoadCardPhotos(){
+  const pxKey = localStorage.getItem('pixabay-key');
+  if(!pxKey) return;
+
+  // Użyj IntersectionObserver do lazy loadingu
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const thumbEl = entry.target;
+      const key = thumbEl.id.replace('thumb-','');
+      const [ci,ii] = key.split('-').map(Number);
+      const item = DATA[ci]?.items[ii];
+      if(!item) return;
+      const ud = userData[key]||{};
+      // Pomiń jeśli już ma zdjęcie
+      if(ud.customPhoto || item._cachedImg){
+        observer.unobserve(thumbEl);
+        return;
+      }
+      observer.unobserve(thumbEl);
+      // Pobierz zdjęcie z Pixabay
+      const pxQuery = item.pxq || item.name.split('(')[0].trim();
+      fetch(`https://pixabay.com/api/?key=${pxKey}&q=${encodeURIComponent(pxQuery)}&image_type=photo&per_page=3&safesearch=true&orientation=horizontal`)
+        .then(r=>r.json())
+        .then(data=>{
+          const hit = (data.hits||[])[0];
+          if(!hit) return;
+          item._cachedImg = hit.webformatURL;
+          // Zaktualizuj miniaturę na karcie
+          const existingEmoji = thumbEl.querySelector('.card-thumb-emoji');
+          if(existingEmoji){
+            const img = document.createElement('img');
+            img.src = hit.webformatURL;
+            img.alt = item.name;
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+            img.onerror = ()=> img.remove();
+            thumbEl.appendChild(img);
+          }
+        })
+        .catch(()=>{});
+    });
+  }, {rootMargin: '200px'});
+
+  document.querySelectorAll('[id^="thumb-"]').forEach(el=> observer.observe(el));
+}
+
+// Odśwież miniatury po załadowaniu zdjęcia w modalu
+const _origOpenModalThumb = openModal;
+window.openModal = function(item, key){
+  _origOpenModalThumb(item, key);
+  // Po zamknięciu modalu sprawdź czy karta ma już zdjęcie
+  setTimeout(()=>{
+    if(item._cachedImg){
+      const thumbEl = document.getElementById('thumb-'+key);
+      if(thumbEl && !thumbEl.querySelector('img')){
+        const img = document.createElement('img');
+        img.src = item._cachedImg;
+        img.alt = item.name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+        img.onerror = ()=> img.remove();
+        thumbEl.appendChild(img);
+      }
+    }
+  }, 500);
+};
 
 // ── Kategorie - dodaj klasy + nowe nagłówki ──
 function applyCategoryStyles(){
