@@ -197,7 +197,67 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   /* Stats + buttons in one tight row */
   .controls-row:first-child{flex-wrap:nowrap;align-items:center;}
   .btn-group{flex-wrap:nowrap;gap:.2rem;}
+  button#data-btn .btn-label{display:none;}
+  button#data-btn{padding:.35rem .5rem;}
 }
+
+/* ── EXPORT / IMPORT PANEL ── */
+#data-panel{background:var(--paper);border-bottom:3px solid var(--sky);}
+.data-panel-inner{max-width:900px;margin:0 auto;padding:1.2rem 1.5rem 1.5rem;}
+.data-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+.data-panel-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--ink);}
+.data-panel-close{background:none;border:1.5px solid var(--muted);color:var(--muted);width:28px;height:28px;cursor:pointer;border-radius:50%;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.data-panel-close:hover{border-color:var(--accent);color:var(--accent);}
+.data-sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+.data-section{background:var(--parchment);border:1px solid rgba(0,0,0,.08);padding:.9rem 1rem;border-radius:3px;}
+.data-section-title{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+.data-section p{font-size:.78rem;color:var(--ink);line-height:1.5;margin-bottom:.6rem;}
+.data-btn{font-family:'Lato',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.45rem 1rem;border-radius:2px;cursor:pointer;transition:all .18s;display:inline-block;width:100%;text-align:center;box-sizing:border-box;margin-top:.3rem;}
+.data-btn-export{background:var(--moss);color:white;border:none;}
+.data-btn-export:hover{background:#3a5233;}
+.data-btn-import{background:none;border:1.5px solid var(--sky);color:var(--sky);}
+.data-btn-import:hover{background:var(--sky);color:white;}
+.data-btn-pdf{background:var(--accent);color:white;border:none;}
+.data-btn-pdf:hover{background:#6e1e1e;}
+.data-btn-guest{background:none;border:1.5px solid var(--gold);color:#8a6a10;}
+.data-btn-guest:hover{background:var(--gold);color:var(--ink);}
+
+/* ── GUEST MODE BANNER ── */
+#guest-banner{display:none;position:sticky;top:0;z-index:20;background:linear-gradient(90deg,#7a4f1e,#c9a84c);color:white;padding:.5rem 1rem;text-align:center;font-size:.8rem;font-weight:700;letter-spacing:.05em;}
+#guest-banner button{margin-left:.8rem;font-size:.72rem;padding:.2rem .7rem;border:1.5px solid white;background:transparent;color:white;cursor:pointer;border-radius:2px;font-family:'Lato',sans-serif;font-weight:700;}
+#guest-banner button:hover{background:white;color:#7a4f1e;}
+
+/* ── PRINT / PDF STYLES ── */
+@media print {
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  header,nav,.controls,.progress-bar,#stats-panel,#planner-panel,#data-panel,
+  #guest-banner,.modal-overlay,footer,#app{display:none!important;}
+  body{background:white;margin:0;padding:0;}
+  #print-journal{display:block!important;}
+  .pj-cover{page-break-after:always;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1a1a2e 0%,#2d1f0e 100%);color:white;text-align:center;padding:3rem;}
+  .pj-cover-emblem{font-size:5rem;margin-bottom:1.5rem;}
+  .pj-cover-title{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:900;line-height:1.2;margin-bottom:.8rem;}
+  .pj-cover-sub{font-size:1rem;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-bottom:2rem;}
+  .pj-cover-date{font-size:.85rem;opacity:.5;border-top:1px solid rgba(255,255,255,.2);padding-top:1rem;margin-top:1rem;}
+  .pj-page{page-break-after:always;padding:2cm 2.5cm;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;}
+  .pj-page-num{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:1.5rem;}
+  .pj-cat{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:.3rem;}
+  .pj-title{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;color:#1a1a2e;line-height:1.2;margin-bottom:.5rem;}
+  .pj-short{font-size:.85rem;color:#666;font-style:italic;margin-bottom:1rem;}
+  .pj-meta{display:flex;gap:1.5rem;margin-bottom:1.2rem;padding-bottom:.8rem;border-bottom:2px solid #c9a84c;}
+  .pj-meta-item{font-size:.8rem;color:#555;}
+  .pj-meta-item strong{color:#1a1a2e;display:block;font-size:1rem;}
+  .pj-img{width:100%;max-height:220px;object-fit:cover;border-radius:4px;margin-bottom:1.2rem;}
+  .pj-desc-label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#999;margin-bottom:.3rem;}
+  .pj-desc{font-size:.82rem;line-height:1.7;color:#333;margin-bottom:1rem;}
+  .pj-note-box{background:#f5f0e8;border-left:3px solid #c9a84c;padding:.7rem 1rem;margin-bottom:1rem;border-radius:0 3px 3px 0;}
+  .pj-note-label{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#8a6a10;margin-bottom:.3rem;}
+  .pj-note{font-size:.85rem;line-height:1.6;color:#3a3530;font-style:italic;}
+  .pj-stars{font-size:1.4rem;color:#f0b429;letter-spacing:2px;margin-bottom:.3rem;}
+  .pj-rating-label{font-size:.65rem;color:#999;text-transform:uppercase;letter-spacing:.1em;}
+  .pj-footer-line{margin-top:auto;padding-top:1rem;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;font-size:.65rem;color:#bbb;}
+}
+#print-journal{display:none;}
 </style>
 </head>
 <body>
@@ -205,6 +265,10 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   <h1>Atrakcje <span>Dolnego Śląska</span></h1>
   <p class="subtitle">Osobista lista odkryć · odległości z Wrocławia</p>
 </header>
+<div id="guest-banner">
+  👁️ Przeglądasz listę: <span id="guest-name"></span> — tryb podglądu (tylko do odczytu)
+  <button onclick="exitGuestMode()">← Wróć do swojej listy</button>
+</div>
 <div class="controls">
   <div class="controls-row">
     <div class="stats">Zaliczone: <strong id="cc">0</strong> / <span id="tc">0</span></div>
@@ -216,6 +280,7 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
       <button class="danger" onclick="clearAll()">↺ <span class="btn-label">Resetuj</span></button>
       <button onclick="toggleStats()" id="stats-btn">📊 <span class="btn-label">Statystyki</span></button>
       <button onclick="togglePlanner()" id="planner-btn">🗺️ <span class="btn-label">Planer</span> <span id="planner-count-badge" class="planner-count-badge" style="display:none">0</span></button>
+      <button onclick="toggleDataPanel()" id="data-btn">💾 <span class="btn-label">Dane</span></button>
     </div>
   </div>
   <div class="controls-row search-row">
@@ -280,6 +345,47 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
     <div id="planner-content"></div>
   </div>
 </div>
+
+
+<div id="data-panel" style="display:none;">
+  <div class="data-panel-inner">
+    <div class="data-panel-header">
+      <h2 class="data-panel-title">💾 Dane i eksport</h2>
+      <button class="data-panel-close" onclick="toggleDataPanel()">✕</button>
+    </div>
+    <div class="data-sections">
+
+      <div class="data-section">
+        <div class="data-section-title">📤 Eksport moich danych</div>
+        <p>Zapisz wszystkie swoje oceny, notatki, linki do zdjęć i zaliczone miejsca do pliku. Przydatne po aktualizacji aplikacji.</p>
+        <button class="data-btn data-btn-export" onclick="exportData()">⬇ Pobierz plik danych (.json)</button>
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">📥 Import danych</div>
+        <p>Wczytaj wcześniej zapisany plik danych. Twoje obecne dane zostaną zastąpione.</p>
+        <button class="data-btn data-btn-import" onclick="document.getElementById('import-file').click()">⬆ Wczytaj plik danych (.json)</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">👁️ Podgląd listy rodziny</div>
+        <p>Wczytaj plik eksportu od kogoś z rodziny. Zobaczysz ich zaliczone miejsca, zdjęcia i oceny. Twoje dane pozostają nienaruszone.</p>
+        <button class="data-btn data-btn-guest" onclick="document.getElementById('guest-file').click()">👁 Wczytaj listę gościa</button>
+        <input type="file" id="guest-file" accept=".json" style="display:none" onchange="loadGuestData(event)">
+      </div>
+
+      <div class="data-section">
+        <div class="data-section-title">📖 Dziennik podróżniczy (PDF)</div>
+        <p>Drukuje książeczkę ze wszystkich zaliczonych miejsc — okładka + jedna strona na atrakcję z opisem, oceną i notatką.</p>
+        <button class="data-btn data-btn-pdf" onclick="printJournal()">🖨 Drukuj dziennik PDF</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="print-journal"></div>
 
 <div id="app"></div>
 
@@ -1421,6 +1527,232 @@ function renderStats(){
     </div>`;
   }).join('');
 }
+// ══════════════════════════════════════════════════════
+// DATA PANEL
+// ══════════════════════════════════════════════════════
+window.toggleDataPanel = function(){
+  const panel = document.getElementById('data-panel');
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  document.getElementById('data-btn').classList.toggle('active', open);
+};
+
+// ── EXPORT ───────────────────────────────────────────
+window.exportData = function(){
+  const exportObj = {
+    version: 1,
+    exported: new Date().toISOString(),
+    owner: 'Mój dziennik – Dolny Śląsk',
+    checked: JSON.parse(localStorage.getItem('ds-checked') || '{}'),
+    userData: JSON.parse(localStorage.getItem('ds-userdata') || '{}'),
+    planner: JSON.parse(localStorage.getItem('ds-planner') || '[]'),
+  };
+  const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const d = new Date();
+  const dateStr = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  a.download = 'dolnyslask-dane-' + dateStr + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ── IMPORT ───────────────────────────────────────────
+window.importData = function(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.checked && !data.userData){
+        alert('Nieprawidłowy plik danych.');
+        return;
+      }
+      if(!confirm('Wczytać dane z pliku? Twoje obecne oceny, notatki i zaliczone miejsca zostaną zastąpione.')){
+        event.target.value = '';
+        return;
+      }
+      if(data.checked)  { localStorage.setItem('ds-checked',  JSON.stringify(data.checked));  checked  = data.checked;  }
+      if(data.userData) { localStorage.setItem('ds-userdata', JSON.stringify(data.userData)); userData = data.userData; }
+      if(data.planner)  { localStorage.setItem('ds-planner',  JSON.stringify(data.planner));  plannerItems = data.planner; }
+      render();
+      updatePlannerBadge();
+      alert('✓ Dane wczytane pomyślnie!');
+    } catch(err) {
+      alert('Błąd wczytywania pliku: ' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+};
+
+// ── GUEST MODE ───────────────────────────────────────
+let guestMode = false;
+let savedMyData = null;
+
+window.loadGuestData = function(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.checked && !data.userData){
+        alert('Nieprawidłowy plik danych.');
+        return;
+      }
+      // Save my own data
+      savedMyData = {
+        checked:  JSON.parse(localStorage.getItem('ds-checked')  || '{}'),
+        userData: JSON.parse(localStorage.getItem('ds-userdata') || '{}'),
+        planner:  JSON.parse(localStorage.getItem('ds-planner')  || '[]'),
+      };
+      // Load guest data into runtime (NOT into localStorage)
+      checked  = data.checked  || {};
+      userData = data.userData || {};
+      plannerItems = [];
+      guestMode = true;
+
+      const guestName = data.owner || file.name.replace('.json','');
+      document.getElementById('guest-name').textContent = guestName;
+      document.getElementById('guest-banner').style.display = 'block';
+      document.getElementById('data-panel').style.display = 'none';
+
+      // Disable write operations in guest mode
+      render();
+      updatePlannerBadge();
+    } catch(err) {
+      alert('Błąd wczytywania pliku: ' + err.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+};
+
+window.exitGuestMode = function(){
+  if(!savedMyData) return;
+  // Restore my data
+  checked  = savedMyData.checked;
+  userData = savedMyData.userData;
+  plannerItems = savedMyData.planner;
+  savedMyData = null;
+  guestMode = false;
+  document.getElementById('guest-banner').style.display = 'none';
+  render();
+  updatePlannerBadge();
+};
+
+// Override save functions to block writes in guest mode
+const _origSave   = save;
+const _origSaveUD = saveUD;
+window.save   = function(){ if(!guestMode) _origSave();   };
+window.saveUD = function(){ if(!guestMode) _origSaveUD(); };
+
+// ══════════════════════════════════════════════════════
+// PRINT JOURNAL
+// ══════════════════════════════════════════════════════
+window.printJournal = function(){
+  // Collect all visited items
+  const visited = [];
+  DATA.forEach((cat, ci) => {
+    cat.items.forEach((item, ii) => {
+      const key = getKey(ci, ii);
+      if(checked[key]) {
+        visited.push({ cat: cat.cat, item, key, ud: userData[key] || {} });
+      }
+    });
+  });
+
+  if(visited.length === 0){
+    alert('Brak zaliczonych miejsc do wydruku. Zaznacz miejsca które odwiedziłeś/aś.');
+    return;
+  }
+
+  // Sort by visit date if available, else by category order
+  visited.sort((a, b) => {
+    if(a.ud.date && b.ud.date) return a.ud.date.localeCompare(b.ud.date);
+    if(a.ud.date) return -1;
+    if(b.ud.date) return 1;
+    return 0;
+  });
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('pl-PL', {year:'numeric', month:'long', day:'numeric'});
+  const yearStr = now.getFullYear();
+
+  let html = '';
+
+  // ── Cover page ──
+  html += `<div class="pj-cover">
+    <div class="pj-cover-emblem">🏔️</div>
+    <div class="pj-cover-title">Dziennik Podróżniczy<br><span style="color:#c9a84c">Rodzinne Wspomnienia</span><br>Dolny Śląsk</div>
+    <div class="pj-cover-sub">odkryte miejsca · własne wspomnienia · oceny</div>
+    <div class="pj-cover-date">Wygenerowano: ${dateStr} · Miejsc zaliczonych: ${visited.length}</div>
+  </div>`;
+
+  // ── One page per attraction ──
+  visited.forEach((entry, idx) => {
+    const { cat, item, ud } = entry;
+    const catName = cat.replace(/^\S+ /, '');
+    const stars = ud.rating ? '★'.repeat(ud.rating) + '☆'.repeat(5 - ud.rating) : null;
+    const visitDate = ud.date ? new Date(ud.date).toLocaleDateString('pl-PL', {year:'numeric', month:'long', day:'numeric'}) : null;
+
+    html += `<div class="pj-page">
+      <div class="pj-page-num">Strona ${idx + 1} z ${visited.length}</div>
+      <div class="pj-cat">${catName}</div>
+      <div class="pj-title">${item.name}</div>
+      <div class="pj-short">${item.short || ''}</div>
+      <div class="pj-meta">
+        ${visitDate ? `<div class="pj-meta-item"><strong>${visitDate}</strong>Data wizyty</div>` : ''}
+        ${stars ? `<div class="pj-meta-item"><strong class="pj-stars">${stars}</strong>Moja ocena</div>` : ''}
+        <div class="pj-meta-item"><strong>${item.km} km</strong>Z Wrocławia</div>
+        <div class="pj-meta-item"><strong>${item.time}</strong>Czas jazdy</div>
+      </div>`;
+
+    if(item.img){
+      html += `<img class="pj-img" src="${item.img}" alt="${item.name}" onerror="this.style.display='none'">`;
+    }
+
+    html += `<div class="pj-desc-label">O tym miejscu</div>
+      <div class="pj-desc">${item.desc}</div>`;
+
+    if(ud.note && ud.note.trim()){
+      html += `<div class="pj-note-box">
+        <div class="pj-note-label">📝 Moje wrażenia</div>
+        <div class="pj-note">${ud.note}</div>
+      </div>`;
+    }
+
+    if(ud.photos && ud.photos.trim()){
+      html += `<div class="pj-note-box" style="border-color:var(--sky)">
+        <div class="pj-note-label" style="color:var(--sky)">📷 Album ze zdjęciami</div>
+        <div class="pj-note" style="font-style:normal;font-size:.75rem;word-break:break-all;">${ud.photos}</div>
+      </div>`;
+    }
+
+    html += `<div class="pj-footer-line">
+        <span>🏔️ Dziennik Podróżniczy · Dolny Śląsk · ${yearStr}</span>
+        <span>${item.name}</span>
+      </div>
+    </div>`;
+  });
+
+  // Inject into print container and print
+  const container = document.getElementById('print-journal');
+  container.innerHTML = html;
+  container.style.display = 'block';
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      container.style.display = 'none';
+      container.innerHTML = '';
+    }, 1000);
+  }, 300);
+};
+
 </script>
 </body>
 </html>
