@@ -483,6 +483,68 @@ body.dark-mode #dark-toggle { background: var(--ink); color: var(--paper); }
 .share-copy { background:var(--parchment); color:var(--ink); border:1.5px solid rgba(0,0,0,.15); }
 .share-copy:hover { background:var(--ink); color:var(--paper); }
 .share-copied { background:var(--moss); color:white; }
+
+/* ══════════════════════════════════════════════════════
+   ANIMACJE
+   ══════════════════════════════════════════════════════ */
+
+/* ── 1. WSUWANIE PANELI Z GÓRY ── */
+.panel-slide {
+  animation: slideDown .32s cubic-bezier(.22,.68,0,1.2) both;
+}
+@keyframes slideDown {
+  from { opacity:0; transform:translateY(-18px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── 2. EFEKT ZAZNACZANIA ── */
+@keyframes checkPulse {
+  0%   { transform:scale(1); }
+  40%  { transform:scale(1.18); }
+  70%  { transform:scale(.94); }
+  100% { transform:scale(1); }
+}
+.item.just-checked .checkbox {
+  animation: checkPulse .35s ease both;
+}
+@keyframes checkRipple {
+  0%   { box-shadow:0 0 0 0 rgba(74,103,65,.45); }
+  100% { box-shadow:0 0 0 18px rgba(74,103,65,0); }
+}
+.item.just-checked {
+  animation: checkRipple .5s ease both;
+}
+
+/* ── 3. POWIADOMIENIE O ODZNACE ── */
+#badge-toast {
+  position: fixed;
+  bottom: -120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--ink), #2a2a4e);
+  color: white;
+  padding: .9rem 1.4rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  z-index: 500;
+  text-align: center;
+  min-width: 240px;
+  max-width: 320px;
+  border: 1px solid rgba(201,168,76,.3);
+  transition: bottom .45s cubic-bezier(.22,.68,0,1.2);
+  pointer-events: none;
+}
+#badge-toast.show { bottom: 1.5rem; }
+#badge-toast .bt-icon { font-size: 2.2rem; line-height: 1; margin-bottom: .3rem; }
+#badge-toast .bt-title { font-size: .7rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--gold); margin-bottom: .15rem; }
+#badge-toast .bt-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 900; }
+#badge-toast .bt-desc { font-size: .7rem; color: rgba(255,255,255,.65); margin-top: .2rem; }
+
+@keyframes badgeGlow {
+  0%, 100% { border-color: rgba(201,168,76,.3); }
+  50%       { border-color: rgba(201,168,76,.9); box-shadow: 0 8px 32px rgba(201,168,76,.25); }
+}
+#badge-toast.show { animation: badgeGlow 1.2s ease .4s 2; }
 </style>
 </head>
 <body>
@@ -787,6 +849,7 @@ body.dark-mode #dark-toggle { background: var(--ink); color: var(--paper); }
 </div>
 
 <footer>Kliknij nazwę aby zaznaczyć · 📖 opis · 📷 zdjęcia · ⭐ ocena · 📝 notatka</footer>
+<div id="badge-toast"><div class="bt-icon"></div><div class="bt-title">Nowa odznaka!</div><div class="bt-name"></div><div class="bt-desc"></div></div>
 <script>
 // Complete DATA array with GPS coords, corrected distances from Wrocław, kids flags
 const DATA = [
@@ -3554,6 +3617,121 @@ window.copyShareText = function(){
       setTimeout(()=>{ btn.textContent = '📋 Kopiuj'; btn.classList.remove('share-copied'); btn.classList.add('share-copy'); }, 2500);
     });
 };
+
+
+// ══════════════════════════════════════════════════════
+// 1. WSUWANIE PANELI
+// ══════════════════════════════════════════════════════
+function animatePanel(panelId){
+  const el = document.getElementById(panelId);
+  if(!el) return;
+  el.classList.remove('panel-slide');
+  void el.offsetWidth; // reflow
+  el.classList.add('panel-slide');
+}
+
+// Patch wszystkich toggle funkcji
+const _panels = {
+  'stats-panel':   'toggleStats',
+  'planner-panel': 'togglePlanner',
+  'data-panel':    'toggleDataPanel',
+  'weekend-panel': 'toggleWeekend',
+  'map-panel':     'toggleMap',
+};
+
+Object.entries(_panels).forEach(([panelId, fnName])=>{
+  const orig = window[fnName];
+  window[fnName] = function(...args){
+    orig(...args);
+    const panel = document.getElementById(panelId);
+    if(panel && panel.style.display !== 'none'){
+      animatePanel(panelId);
+    }
+  };
+});
+
+// ══════════════════════════════════════════════════════
+// 2. EFEKT ZAZNACZANIA
+// ══════════════════════════════════════════════════════
+const _origToggleAnim = toggle;
+window.toggle = function(key, el, e){
+  const wasChecked = !!checked[key];
+  _origToggleAnim(key, el, e);
+  // Dodaj klasę animacji tylko przy zaznaczaniu (nie odznaczaniu)
+  if(!wasChecked && checked[key]){
+    el.classList.add('just-checked');
+    setTimeout(()=> el.classList.remove('just-checked'), 600);
+    // Sprawdź czy zdobyto nową odznakę
+    checkNewBadges();
+  }
+};
+
+// ══════════════════════════════════════════════════════
+// 3. POWIADOMIENIE O ODZNACE
+// ══════════════════════════════════════════════════════
+let earnedBadges = new Set(JSON.parse(localStorage.getItem('earned-badges') || '[]'));
+
+function checkNewBadges(){
+  if(typeof BADGES === 'undefined') return;
+
+  const total   = DATA.reduce((s,c)=>s+c.items.length, 0);
+  const done    = Object.values(checked).filter(Boolean).length;
+  const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
+  const actCounts = {};
+  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+    if(checked[getKey(ci,ii)] && item.acts)
+      item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
+  }));
+
+  const newlyEarned = [];
+  BADGES.forEach(b=>{
+    if(earnedBadges.has(b.id)) return;
+    if(b.check(done, userData, catDone, actCounts)){
+      earnedBadges.add(b.id);
+      newlyEarned.push(b);
+    }
+  });
+
+  if(newlyEarned.length > 0){
+    localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
+    // Pokazuj odznaki jedna po drugiej z opóźnieniem
+    newlyEarned.forEach((badge, i)=>{
+      setTimeout(()=> showBadgeToast(badge), i * 3200);
+    });
+  }
+}
+
+let toastTimeout = null;
+function showBadgeToast(badge){
+  const toast = document.getElementById('badge-toast');
+  if(!toast) return;
+  toast.querySelector('.bt-icon').textContent  = badge.icon;
+  toast.querySelector('.bt-name').textContent  = badge.name;
+  toast.querySelector('.bt-desc').textContent  = badge.desc;
+  toast.classList.add('show');
+  if(toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(()=>{
+    toast.classList.remove('show');
+  }, 3000);
+}
+
+// Inicjuj earned badges przy starcie (bez pokazywania powiadomień)
+(function initBadges(){
+  if(typeof BADGES === 'undefined') return;
+  // Dodaj już zdobyte do setu bez animacji
+  const total   = DATA.reduce((s,c)=>s+c.items.length, 0);
+  const done    = Object.values(checked).filter(Boolean).length;
+  const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
+  const actCounts = {};
+  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+    if(checked[getKey(ci,ii)] && item.acts)
+      item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
+  }));
+  BADGES.forEach(b=>{
+    if(b.check(done, userData, catDone, actCounts)) earnedBadges.add(b.id);
+  });
+  localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
+})();
 
 
 </script>
