@@ -2406,6 +2406,12 @@ const EXTRA_BADGES = [
   {id:'woda',      icon:'💧', name:'Wodnik',          desc:'Zalicz 5 atrakcji wodnych (jeziora, wodospady)', check:(d,u,cats,acts)=>(acts['sporty wodne']||0)+(acts['przyroda']||0)>=5},
   {id:'fotograf10',icon:'🎞️', name:'Fotoreporter',   desc:'Dodaj albumy do 10 wycieczek',                  check:(d,u)=>Object.values(u).filter(x=>x.photos&&x.photos.trim()).length>=10},
   {id:'allregions',icon:'🗺️', name:'Regionalista',   desc:'Zalicz min. 1 atrakcję z każdej kategorii',     check:(d,u,cats)=>cats.every(c=>c>=1)},
+  {id:'maly_odkrywca', icon:'🧒', name:'Mały Odkrywca',  desc:'Zalicz 3 miejsca przyjazne dzieciom (👶)',       check:(d,u,cats)=>{
+    let n=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]&&item.kids) n++; })); return n>=3;
+  }},
+  {id:'dzieciecy_mistrz', icon:'🏆', name:'Dziecięcy Mistrz', desc:'Zalicz wszystkie 15 miejsc przyjaznych dzieciom 👶', check:(d,u,cats)=>{
+    let n=0, total=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(item.kids){ total++; if(checked[getKey(ci,ii)]) n++; } })); return total>0 && n>=total;
+  }},
 ];
 
 // Patch BADGES array after it's defined
