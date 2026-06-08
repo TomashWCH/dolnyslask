@@ -442,6 +442,8 @@ body.dark-mode {
   --checked-bg: #1e2e1e;
 }
 body.dark-mode header { background: #0f0f1e; }
+body.dark-mode header h1 { color: #e8e3d8; }
+body.dark-mode header .subtitle { color: rgba(232,227,216,.5); }
 body.dark-mode .modal { background: var(--paper); }
 body.dark-mode .weather-day { background: #2a2a42; }
 body.dark-mode .nearby-item { background: var(--parchment); }
@@ -3506,14 +3508,14 @@ function buildShareText(item, key){
   const name = removePL(item.name || '');
   const short = removePL(item.short || '');
 
-  return `🏔️ *${name}*${stars ? ' ' + stars : ''}
-📍 ${short}
-🚗 ${item.km || '?'} km · ${item.time || ''}${date}
+  const starsText = ud.rating ? '*'.repeat(ud.rating) + '/5' : '';
+  return `*${name}*${starsText ? ' [' + starsText + ']' : ''}
+${short}
+${item.km || '?'} km z Wroclawia · ${item.time || ''}${date}
 
 ${desc}
 
-🗺️ Navigate: ${mapsUrl}
-_Atrakcje Dolnego Slaska_`;
+Nawiguj: ${mapsUrl}`;
 }
 
 window.shareWhatsApp = function(){
