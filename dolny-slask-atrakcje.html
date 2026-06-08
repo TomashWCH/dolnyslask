@@ -626,7 +626,9 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
 
 /* ── WIDOK LISTY (istniejący) ── */
 .items-list.list-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:0;padding:0 .8rem .8rem;}
-.items-list.list-view .item{display:flex;align-items:flex-start;gap:.6rem;padding:.6rem .7rem;cursor:pointer;border-radius:4px;transition:background .15s;user-select:none;}
+.items-list.list-view .item{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;cursor:pointer;border-radius:4px;transition:background .15s;user-select:none;}
+.items-list.list-view .item .item-thumb{display:flex!important;}
+.items-list.card-view .item .item-thumb{display:none!important;}
 .items-list.list-view .item:hover{background:rgba(0,0,0,.04);}
 .items-list.list-view .item.checked{background:var(--checked-bg);}
 
@@ -1801,6 +1803,9 @@ function buildItemEl(item,ci,ii,key,isChecked,ud,isKids,idx){
   el.dataset.idx=String(idx).padStart(2,'0');
 
   el.innerHTML=`
+    <div class="item-thumb ct-${ci % 10}" id="thumb-${key}" style="width:52px;min-width:52px;height:52px;border-radius:6px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem;">
+      <span class="card-thumb-emoji">${DATA[ci].cat.split(' ')[0]}</span>
+    </div>
     <span class="item-idx">${String(idx).padStart(2,'0')}</span>
     <span class="checkbox">${isChecked?'✓':''}</span>
     <div class="item-body">
