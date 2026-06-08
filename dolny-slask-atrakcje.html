@@ -3474,19 +3474,46 @@ window.openModal = function(item, key){
 // ══════════════════════════════════════════════════════
 // SHARE - WhatsApp i Kopiuj
 // ══════════════════════════════════════════════════════
+function removePL(str){
+  if(!str) return '';
+  return str
+    .replace(/ą/g,'a').replace(/Ą/g,'A')
+    .replace(/ć/g,'c').replace(/Ć/g,'C')
+    .replace(/ę/g,'e').replace(/Ę/g,'E')
+    .replace(/ł/g,'l').replace(/Ł/g,'L')
+    .replace(/ń/g,'n').replace(/Ń/g,'N')
+    .replace(/ó/g,'o').replace(/Ó/g,'O')
+    .replace(/ś/g,'s').replace(/Ś/g,'S')
+    .replace(/ź/g,'z').replace(/Ź/g,'Z')
+    .replace(/ż/g,'z').replace(/Ż/g,'Z')
+    // Czech/German chars
+    .replace(/č/g,'c').replace(/Č/g,'C')
+    .replace(/š/g,'s').replace(/Š/g,'S')
+    .replace(/ž/g,'z').replace(/Ž/g,'Z')
+    .replace(/ě/g,'e').replace(/á/g,'a')
+    .replace(/í/g,'i').replace(/ů/g,'u')
+    .replace(/ü/g,'u').replace(/ö/g,'o')
+    .replace(/ä/g,'a');
+}
+
 function buildShareText(item, key){
   const ud = userData[key] || {};
   const stars = ud.rating ? '⭐'.repeat(ud.rating) : '';
-  const note  = ud.note   ? `\n💬 "${ud.note}"` : '';
   const date  = ud.date   ? `\n📅 ${ud.date}` : '';
-  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Dolny Śląsk')}`;
+  const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(item.name + ' Dolny Slask')}`;
+  // Użyj pełnego opisu z danych, pozbawionego polskich znaków
+  const desc = removePL(item.desc || '');
+  const name = removePL(item.name || '');
+  const short = removePL(item.short || '');
 
-  return `🏔️ *${item.name}*${stars ? ' ' + stars : ''}
-📍 ${item.short || ''}
-🚗 ${item.km || '?'} km z Wrocławia · ${item.time || ''}${date}${note}
-🗺️ Nawiguj: ${mapsUrl}
+  return `🏔️ *${name}*${stars ? ' ' + stars : ''}
+📍 ${short}
+🚗 ${item.km || '?'} km · ${item.time || ''}${date}
 
-_Wysłano z Atrakcje Dolnego Śląska_`;
+${desc}
+
+🗺️ Navigate: ${mapsUrl}
+_Atrakcje Dolnego Slaska_`;
 }
 
 window.shareWhatsApp = function(){
