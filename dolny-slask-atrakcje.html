@@ -16,7 +16,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;ba
 h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;}
 h1 span{color:var(--gold);}
 .subtitle{font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.5);margin-top:.3rem;font-weight:300;}
-.controls{display:flex;flex-direction:column;gap:.4rem;padding:.6rem .8rem;background:var(--parchment);border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.controls{display:flex;flex-direction:column;gap:.3rem;padding:.5rem .8rem;background:var(--parchment);border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.controls-row-stats{display:flex;align-items:center;}
+.controls-row-btns{display:flex;gap:.3rem;flex-wrap:wrap;align-items:center;}
 .stats{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--muted);}
 .stats strong{color:var(--moss);font-size:1.1rem;}
 .btn-group{display:flex;gap:.3rem;flex-wrap:wrap;}
@@ -185,30 +187,22 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
 
 /* ── MOBILE CONTROLS ── */
 @media(max-width:599px){
-  .controls{padding:.4rem .6rem;gap:.3rem;}
-  .controls-row{gap:.25rem;}
-  .stats{font-size:.78rem;}
-  /* Hide text labels, show only icons/symbols */
+  .controls{padding:.4rem .5rem;gap:.25rem;}
+  .controls-row-stats .stats{font-size:.78rem;}
+  .controls-row-btns{gap:.2rem;flex-wrap:wrap;}
   .btn-label{display:none;}
-  /* Compact buttons */
-  button{padding:.35rem .45rem;font-size:.7rem;letter-spacing:0;}
-  /* Search row: single line, no wrap */
+  button.fb,button.danger,#stats-btn,#map-btn,#planner-btn,
+  #btn-activity,#btn-fuel,#weekend-btn,#data-btn,#fb-kids{
+    padding:.32rem .42rem;font-size:.7rem;letter-spacing:0;
+  }
   .search-row{flex-wrap:nowrap;}
-  #search-input{min-width:0;flex:1;font-size:.78rem;padding:.38rem .6rem;}
-  #dist-filter,#sort-filter{max-width:80px;font-size:.7rem;padding:.35rem .25rem;}
-  /* Stats + buttons in one tight row */
-  .controls-row:first-child{flex-wrap:nowrap;align-items:center;}
-  .btn-group{flex-wrap:nowrap;gap:.2rem;}
-  button#data-btn .btn-label{display:none;}
-  button#data-btn{padding:.35rem .5rem;}
-  button#act-filter-btn .btn-label{display:none;}
-  button#act-filter-btn{padding:.35rem .5rem;}
-  button#fuel-btn .btn-label{display:none;}
-  button#fuel-btn{padding:.35rem .5rem;}
-  button#map-btn .btn-label{display:none;}
-  button#map-btn{padding:.35rem .5rem;}
-  button#weekend-btn .btn-label{display:none;}
-  button#weekend-btn{padding:.35rem .5rem;}
+  #search-input{min-width:0;flex:1;font-size:.78rem;padding:.35rem .5rem;}
+  #dist-filter,#sort-filter{max-width:76px;font-size:.68rem;padding:.32rem .2rem;}
+  .activity-filter-row{gap:.2rem;padding:.3rem .5rem;}
+  .act-btn{font-size:.62rem;padding:.25rem .5rem;}
+  .fuel-bar{gap:.4rem;}
+  .weekend-controls{gap:.4rem;}
+  .weekend-date-input,.weekend-max-dist{font-size:.78rem;}
 }
 
 /* ── EXPORT / IMPORT PANEL ── */
@@ -389,22 +383,7 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
 .nearby-loading{font-size:.75rem;color:var(--muted);font-style:italic;padding:.3rem 0;}
 .nearby-empty{font-size:.75rem;color:var(--muted);font-style:italic;padding:.3rem 0;}
 
-/* ── MOBILE MORE MENU ── */
-.more-menu-wrap{position:relative;display:inline-block;}
-#more-menu-dropdown{display:none;position:absolute;top:110%;right:0;background:var(--paper);border:1.5px solid var(--ink);border-radius:4px;z-index:50;min-width:160px;box-shadow:0 4px 16px rgba(0,0,0,.15);}
-#more-menu-dropdown.open{display:block;}
-#more-menu-dropdown button{display:flex;align-items:center;gap:.5rem;width:100%;padding:.55rem .9rem;background:none;border:none;font-family:'Lato',sans-serif;font-size:.8rem;font-weight:700;color:var(--ink);cursor:pointer;text-align:left;border-bottom:1px solid rgba(0,0,0,.06);}
-#more-menu-dropdown button:last-child{border-bottom:none;}
-#more-menu-dropdown button:hover{background:var(--parchment);}
-#more-menu-dropdown button.active{color:var(--moss);}
-@media(min-width:600px){
-  .more-menu-wrap{display:none!important;}
-  #btn-activity,#btn-fuel,#btn-weekend,#btn-data{display:inline-flex!important;}
-}
-@media(max-width:599px){
-  #btn-activity,#btn-fuel,#btn-weekend,#btn-data{display:none!important;}
-  .more-menu-wrap{display:inline-block;}
-}
+/* more-menu removed */
 
 /* ── HISTORIA WYJAZDÓW ── */
 .timeline{display:flex;flex-direction:column;gap:0;}
@@ -460,22 +439,22 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   <button onclick="exitGuestMode()">← Wróć do swojej listy</button>
 </div>
 <div class="controls">
-  <div class="controls-row">
+  <div class="controls-row controls-row-stats">
     <div class="stats">Zaliczone: <strong id="cc">0</strong> / <span id="tc">0</span></div>
-    <div class="btn-group">
-      <button onclick="filterView('all')" id="fb-all" class="fb active">✓ <span class="btn-label">Wszystkie</span></button>
-      <button onclick="filterView('todo')" id="fb-todo" class="fb">○ <span class="btn-label">Do zrobienia</span></button>
-      <button onclick="filterView('done')" id="fb-done" class="fb">✓ <span class="btn-label">Zaliczone</span></button>
-      <button onclick="toggleKids()" id="fb-kids" class="fb">👶 <span class="btn-label">Rodzinne</span></button>
-      <button class="danger" onclick="clearAll()">↺ <span class="btn-label">Resetuj</span></button>
-      <button onclick="toggleStats()" id="stats-btn">📊 <span class="btn-label">Statystyki</span></button>
-      <button onclick="toggleMap()" id="map-btn">🗺️ <span class="btn-label">Mapa</span></button>
-      <button onclick="togglePlanner()" id="planner-btn">🗺️ <span class="btn-label">Planer</span> <span id="planner-count-badge" class="planner-count-badge" style="display:none">0</span></button>
-      <button onclick="toggleActivityFilter()" id="act-filter-btn">🎯 <span class="btn-label">Aktywność</span></button>
-      <button onclick="toggleWeekend()" id="weekend-btn">🗓️ <span class="btn-label">Weekend</span></button>
-      <button onclick="toggleFuelBar()" id="fuel-btn">⛽ <span class="btn-label">Paliwo</span></button>
-      <button onclick="toggleDataPanel()" id="data-btn">💾 <span class="btn-label">Dane</span></button>
-    </div>
+  </div>
+  <div class="controls-row controls-row-btns">
+    <button onclick="filterView('all')" id="fb-all" class="fb active">✓ <span class="btn-label">Wszystkie</span></button>
+    <button onclick="filterView('todo')" id="fb-todo" class="fb">○ <span class="btn-label">Do zrobienia</span></button>
+    <button onclick="filterView('done')" id="fb-done" class="fb">✓ <span class="btn-label">Zaliczone</span></button>
+    <button onclick="toggleKids()" id="fb-kids" class="fb">👶 <span class="btn-label">Rodzinne</span></button>
+    <button class="danger" onclick="clearAll()">↺ <span class="btn-label">Resetuj</span></button>
+    <button onclick="toggleStats()" id="stats-btn">📊 <span class="btn-label">Statystyki</span></button>
+    <button onclick="toggleMap()" id="map-btn">🗺️ <span class="btn-label">Mapa</span></button>
+    <button onclick="togglePlanner()" id="planner-btn">🛣️ <span class="btn-label">Planer</span> <span id="planner-count-badge" class="planner-count-badge" style="display:none">0</span></button>
+    <button onclick="toggleActivityFilter()" id="btn-activity">🎯 <span class="btn-label">Aktywność</span></button>
+    <button onclick="toggleFuelBar()" id="btn-fuel">⛽ <span class="btn-label">Paliwo</span></button>
+    <button onclick="toggleWeekend()" id="weekend-btn">🗓️ <span class="btn-label">Weekend</span></button>
+    <button onclick="toggleDataPanel()" id="data-btn">💾 <span class="btn-label">Dane</span></button>
   </div>
   <div class="controls-row search-row">
     <input id="search-input" type="search" placeholder="🔍 Szukaj atrakcji..." oninput="applyFilters()" autocomplete="off">
@@ -3080,21 +3059,7 @@ window.openModal = function(item, key){
 };
 
 
-// ── MORE MENU (mobile) ──
-window.toggleMoreMenu = function(){
-  const dd = document.getElementById('more-menu-dropdown');
-  dd.classList.toggle('open');
-};
-window.closeMoreMenu = function(){
-  document.getElementById('more-menu-dropdown').classList.remove('open');
-};
-// Close on outside click
-document.addEventListener('click', e=>{
-  const wrap = document.querySelector('.more-menu-wrap');
-  if(wrap && !wrap.contains(e.target)){
-    document.getElementById('more-menu-dropdown').classList.remove('open');
-  }
-});
+// more-menu removed
 
 // ══════════════════════════════════════════════════════
 // HISTORIA WYJAZDÓW
