@@ -14,10 +14,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;ba
 h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;}
 h1 span{color:var(--gold);}
 .subtitle{font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.5);margin-top:.3rem;font-weight:300;}
-.controls{display:flex;flex-wrap:wrap;gap:.6rem;padding:1rem 1.2rem;background:var(--parchment);border-bottom:1px solid rgba(0,0,0,.08);align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.controls{display:flex;flex-direction:column;gap:.4rem;padding:.6rem .8rem;background:var(--parchment);border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08);}
 .stats{font-family:'Playfair Display',serif;font-size:.95rem;color:var(--muted);}
 .stats strong{color:var(--moss);font-size:1.1rem;}
-.btn-group{display:flex;gap:.4rem;flex-wrap:wrap;}
+.btn-group{display:flex;gap:.3rem;flex-wrap:wrap;}
 button{font-family:'Lato',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.4rem .9rem;border:1.5px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;transition:all .18s;border-radius:2px;}
 button:hover{background:var(--ink);color:var(--paper);}
 button.danger{border-color:var(--accent);color:var(--accent);}
@@ -73,8 +73,8 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
 @media(max-width:400px){.items-list{grid-template-columns:1fr;}}
 
 /* ── Controls row ── */
-.controls-row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;}
-.search-row{margin-top:.5rem;}
+.controls-row{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;justify-content:space-between;}
+.search-row{margin-top:0;}
 #search-input{flex:1;min-width:160px;padding:.45rem .8rem;border:1.5px solid var(--ink);background:var(--paper);font-family:'Lato',sans-serif;font-size:.82rem;color:var(--ink);border-radius:2px;}
 #search-input:focus{outline:none;border-color:var(--accent);}
 #dist-filter{padding:.4rem .6rem;border:1.5px solid var(--ink);background:var(--paper);font-family:'Lato',sans-serif;font-size:.78rem;color:var(--ink);cursor:pointer;border-radius:2px;}
@@ -180,6 +180,24 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
 .add-to-plan-btn{font-size:.6rem;font-weight:700;letter-spacing:.06em;padding:.15rem .45rem;border-radius:2px;background:rgba(74,103,65,.12);color:var(--moss);border:1.5px solid rgba(74,103,65,.3);cursor:pointer;transition:all .15s;white-space:nowrap;}
 .add-to-plan-btn:hover,.add-to-plan-btn.in-plan{background:var(--moss);color:white;border-color:var(--moss);}
 .add-to-plan-btn.in-plan::before{content:'✓ ';}
+
+/* ── MOBILE CONTROLS ── */
+@media(max-width:599px){
+  .controls{padding:.4rem .6rem;gap:.3rem;}
+  .controls-row{gap:.25rem;}
+  .stats{font-size:.78rem;}
+  /* Hide text labels, show only icons/symbols */
+  .btn-label{display:none;}
+  /* Compact buttons */
+  button{padding:.35rem .45rem;font-size:.7rem;letter-spacing:0;}
+  /* Search row: single line, no wrap */
+  .search-row{flex-wrap:nowrap;}
+  #search-input{min-width:0;flex:1;font-size:.78rem;padding:.38rem .6rem;}
+  #dist-filter,#sort-filter{max-width:80px;font-size:.7rem;padding:.35rem .25rem;}
+  /* Stats + buttons in one tight row */
+  .controls-row:first-child{flex-wrap:nowrap;align-items:center;}
+  .btn-group{flex-wrap:nowrap;gap:.2rem;}
+}
 </style>
 </head>
 <body>
@@ -191,13 +209,13 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   <div class="controls-row">
     <div class="stats">Zaliczone: <strong id="cc">0</strong> / <span id="tc">0</span></div>
     <div class="btn-group">
-      <button onclick="filterView('all')" id="fb-all" class="fb active">Wszystkie</button>
-      <button onclick="filterView('todo')" id="fb-todo" class="fb">Do zrobienia</button>
-      <button onclick="filterView('done')" id="fb-done" class="fb">Zaliczone ✓</button>
-      <button onclick="toggleKids()" id="fb-kids" class="fb">👶 Rodzinne</button>
-      <button class="danger" onclick="clearAll()">Resetuj</button>
-      <button onclick="toggleStats()" id="stats-btn">📊 Statystyki</button>
-      <button onclick="togglePlanner()" id="planner-btn">🗺️ Planer <span id="planner-count-badge" class="planner-count-badge" style="display:none">0</span></button>
+      <button onclick="filterView('all')" id="fb-all" class="fb active">✓ <span class="btn-label">Wszystkie</span></button>
+      <button onclick="filterView('todo')" id="fb-todo" class="fb">○ <span class="btn-label">Do zrobienia</span></button>
+      <button onclick="filterView('done')" id="fb-done" class="fb">✓ <span class="btn-label">Zaliczone</span></button>
+      <button onclick="toggleKids()" id="fb-kids" class="fb">👶 <span class="btn-label">Rodzinne</span></button>
+      <button class="danger" onclick="clearAll()">↺ <span class="btn-label">Resetuj</span></button>
+      <button onclick="toggleStats()" id="stats-btn">📊 <span class="btn-label">Statystyki</span></button>
+      <button onclick="togglePlanner()" id="planner-btn">🗺️ <span class="btn-label">Planer</span> <span id="planner-count-badge" class="planner-count-badge" style="display:none">0</span></button>
     </div>
   </div>
   <div class="controls-row search-row">
