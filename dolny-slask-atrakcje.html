@@ -1646,7 +1646,9 @@ function toggle(key,el,e){
   if(!checked[key]) delete checked[key];
   save();
   el.classList.toggle('checked', !!checked[key]);
-  el.querySelector('.checkbox').textContent = checked[key]?'✓':'';
+  // Guard: .checkbox exists in list-view, .card-chk in card-view
+  const chkEl = el.querySelector('.checkbox') || el.querySelector('.card-chk');
+  if(chkEl) chkEl.textContent = checked[key]?'✓':'';
   updateStats();
   applyFilters();
 }
