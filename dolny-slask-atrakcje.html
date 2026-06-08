@@ -4014,7 +4014,7 @@ function rebuildCategoryHeaders(){
   });
 }
 
-// Init view mode
+// Init view mode - po załadowaniu DOM
 (function initView(){
   const saved = localStorage.getItem('view-mode') || 'card';
   currentView = saved;
@@ -4022,6 +4022,12 @@ function rebuildCategoryHeaders(){
   const btnList = document.getElementById('view-btn-list');
   if(btnCard) btnCard.classList.toggle('active', saved==='card');
   if(btnList) btnList.classList.toggle('active', saved==='list');
+  // Zastosuj od razu po render()
+  setTimeout(()=>{
+    applyCategoryStyles();
+    rebuildCategoryHeaders();
+    applyViewMode();
+  }, 0);
 })();
 
 
