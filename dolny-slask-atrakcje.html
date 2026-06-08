@@ -248,8 +248,9 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
 /* ── PRINT / PDF STYLES ── */
 @media print {
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  header,nav,.controls,.progress-bar,#stats-panel,#planner-panel,#data-panel,
-  #guest-banner,.modal-overlay,footer,#app{display:none!important;}
+  header,nav,.controls,.progress-bar,.view-toggle,.activity-filter-row,.fuel-bar,
+  #stats-panel,#planner-panel,#data-panel,#weekend-panel,#map-panel,
+  #guest-banner,#pixabay-setup,#badge-toast,.modal-overlay,footer,#app{display:none!important;}
   body{background:white;margin:0;padding:0;}
   #print-journal{display:block!important;}
   .pj-cover{page-break-after:always;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1a1a2e 0%,#2d1f0e 100%);color:white;text-align:center;padding:3rem;}
