@@ -23,11 +23,13 @@
 :root{--ink:#1a1a2e;--paper:#f5f0e8;--parchment:#ede8d8;--accent:#8b2c2c;--gold:#c9a84c;--moss:#4a6741;--sky:#4a7fa5;--muted:#8a8070;--checked-bg:#eaf5ea;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--paper);color:var(--ink);font-family:'Lato',sans-serif;min-height:100vh;}
-header{background:var(--ink);color:var(--paper);padding:2rem 1.5rem 1.8rem;text-align:center;position:relative;overflow:hidden;}
-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--gold),var(--moss),var(--sky),var(--accent));}
+header{background:var(--ink);color:var(--paper);padding:0;text-align:center;position:relative;overflow:hidden;}
+.header-mountains{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.header-content{position:relative;z-index:1;padding:1.8rem 1.5rem 1.4rem;}
 h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:900;}
 h1 span{color:var(--gold);}
-.subtitle{font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.5);margin-top:.3rem;font-weight:300;}
+.subtitle{font-size:.8rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(245,240,232,.45);margin-top:.3rem;font-weight:300;}
+#dark-toggle{position:absolute;top:.8rem;right:.8rem;z-index:2;}
 .controls{display:flex;flex-direction:column;gap:.3rem;padding:.5rem .8rem;background:var(--parchment);border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(0,0,0,.08);}
 .controls-row-stats{display:flex;align-items:center;}
 .controls-row-btns{display:flex;gap:.3rem;flex-wrap:wrap;align-items:center;}
@@ -547,13 +549,110 @@ body.dark-mode #dark-toggle { background: var(--ink); color: var(--paper); }
   50%       { border-color: rgba(201,168,76,.9); box-shadow: 0 8px 32px rgba(201,168,76,.25); }
 }
 #badge-toast.show { animation: badgeGlow 1.2s ease .4s 2; }
+
+/* ══════════════════════════════════════════════════════
+   REDESIGN WIZUALNY
+   ══════════════════════════════════════════════════════ */
+
+/* ── PRZEŁĄCZNIK WIDOKU ── */
+.view-toggle{display:flex;gap:0;margin:.5rem .8rem .3rem;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden;width:fit-content;}
+.view-btn{padding:.32rem .9rem;font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:none;background:transparent;color:var(--muted);cursor:pointer;font-family:'Lato',sans-serif;transition:all .15s;}
+.view-btn.active{background:var(--ink);color:var(--paper);}
+
+/* ── NAGŁÓWKI KATEGORII ── */
+.category-header{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem .3rem;cursor:pointer;user-select:none;}
+.cat-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .75rem;border-radius:20px;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;}
+.cat-progress-wrap{flex:1;height:5px;background:rgba(0,0,0,.08);border-radius:3px;overflow:hidden;}
+body.dark-mode .cat-progress-wrap{background:rgba(255,255,255,.1);}
+.cat-progress-bar{height:100%;border-radius:3px;transition:width .6s ease;}
+.cat-count{font-size:.7rem;color:var(--muted);flex-shrink:0;}
+.cat-toggle{font-size:.65rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.category-section.collapsed .cat-toggle{transform:rotate(-90deg);}
+.category-section.collapsed .items-list{display:none;}
+
+/* Kolory kategorii */
+.cat-0 .cat-pill{background:rgba(139,44,44,.12);color:#8b2c2c;border:1px solid rgba(139,44,44,.2);}
+.cat-0 .cat-progress-bar{background:linear-gradient(90deg,#8b2c2c,#c9a84c);}
+.cat-1 .cat-pill{background:rgba(74,103,65,.12);color:#4a6741;border:1px solid rgba(74,103,65,.2);}
+.cat-1 .cat-progress-bar{background:linear-gradient(90deg,#4a6741,#7ab840);}
+.cat-2 .cat-pill{background:rgba(90,110,90,.1);color:#4a6741;border:1px solid rgba(74,103,65,.15);}
+.cat-2 .cat-progress-bar{background:linear-gradient(90deg,#5a7751,#a0c870);}
+.cat-3 .cat-pill{background:rgba(201,168,76,.12);color:#8a6a10;border:1px solid rgba(201,168,76,.25);}
+.cat-3 .cat-progress-bar{background:linear-gradient(90deg,#8a6a10,#c9a84c);}
+.cat-4 .cat-pill{background:rgba(74,127,165,.12);color:#4a7fa5;border:1px solid rgba(74,127,165,.2);}
+.cat-4 .cat-progress-bar{background:linear-gradient(90deg,#4a7fa5,#7ab8d8);}
+.cat-5 .cat-pill{background:rgba(100,80,50,.12);color:#6e5535;border:1px solid rgba(110,85,53,.2);}
+.cat-5 .cat-progress-bar{background:linear-gradient(90deg,#6e5535,#a0804a);}
+.cat-6 .cat-pill{background:rgba(60,120,60,.12);color:#3a7a3a;border:1px solid rgba(60,120,60,.2);}
+.cat-6 .cat-progress-bar{background:linear-gradient(90deg,#3a7a3a,#7ab840);}
+.cat-7 .cat-pill{background:rgba(165,74,127,.1);color:#a54a7f;border:1px solid rgba(165,74,127,.2);}
+.cat-7 .cat-progress-bar{background:linear-gradient(90deg,#a54a7f,#d480b0);}
+.cat-8 .cat-pill{background:rgba(74,127,165,.1);color:#3a6f95;border:1px solid rgba(74,127,165,.15);}
+.cat-8 .cat-progress-bar{background:linear-gradient(90deg,#3a6f95,#7ab8d8);}
+.cat-9 .cat-pill{background:rgba(201,168,76,.18);color:#8a6a10;border:1px solid rgba(201,168,76,.3);}
+.cat-9 .cat-progress-bar{background:linear-gradient(90deg,#c9a84c,#f0d080);}
+
+/* ── WIDOK KART ── */
+.items-list.card-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;padding:.5rem 1rem 1rem;}
+.items-list.card-view .item{flex-direction:column;padding:0;border-radius:10px;border:1.5px solid rgba(0,0,0,.1);overflow:hidden;background:var(--paper);box-shadow:0 1px 4px rgba(0,0,0,.06);transition:box-shadow .18s,border-color .18s;}
+.items-list.card-view .item:hover{box-shadow:0 4px 16px rgba(0,0,0,.12);border-color:rgba(0,0,0,.2);}
+.items-list.card-view .item.checked{border-color:rgba(74,103,65,.4);background:var(--checked-bg);}
+body.dark-mode .items-list.card-view .item{border-color:rgba(255,255,255,.1);box-shadow:0 1px 4px rgba(0,0,0,.3);}
+body.dark-mode .items-list.card-view .item:hover{border-color:rgba(255,255,255,.2);}
+body.dark-mode .items-list.card-view .item.checked{border-color:rgba(122,184,122,.3);}
+
+.card-thumb{width:100%;height:90px;display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;position:relative;}
+.card-thumb img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.card-thumb-emoji{position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+
+/* Kolory tła miniatur */
+.ct-0{background:linear-gradient(135deg,#2a1515,#4a2828);}
+.ct-1{background:linear-gradient(135deg,#152a15,#284828);}
+.ct-2{background:linear-gradient(135deg,#1a2a1a,#2a3a2a);}
+.ct-3{background:linear-gradient(135deg,#2a2010,#4a3818);}
+.ct-4{background:linear-gradient(135deg,#10202a,#183048);}
+.ct-5{background:linear-gradient(135deg,#1a1510,#302518);}
+.ct-6{background:linear-gradient(135deg,#102010,#183018);}
+.ct-7{background:linear-gradient(135deg,#2a1020,#401828);}
+.ct-8{background:linear-gradient(135deg,#101828,#182838);}
+.ct-9{background:linear-gradient(135deg,#201808,#382a08);}
+
+.card-body-wrap{padding:.6rem .75rem .75rem;flex:1;}
+.card-check-name{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.2rem;}
+.card-chk{width:15px;height:15px;min-width:15px;border:1.5px solid rgba(0,0,0,.22);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:white;margin-top:1px;flex-shrink:0;}
+body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
+.item.checked .card-chk{background:var(--moss);border-color:var(--moss);}
+
+/* ── WIDOK LISTY (istniejący) ── */
+.items-list.list-view{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:0;padding:0 .8rem .8rem;}
+.items-list.list-view .item{display:flex;align-items:flex-start;gap:.6rem;padding:.6rem .7rem;cursor:pointer;border-radius:4px;transition:background .15s;user-select:none;}
+.items-list.list-view .item:hover{background:rgba(0,0,0,.04);}
+.items-list.list-view .item.checked{background:var(--checked-bg);}
+
+@media(max-width:599px){
+  .items-list.card-view{grid-template-columns:repeat(2,1fr);gap:8px;padding:.4rem .6rem .8rem;}
+  .card-thumb{height:75px;}
+}
 </style>
 </head>
 <body>
 <header>
-  <h1>Atrakcje <span>Dolnego Śląska</span></h1>
-  <p class="subtitle">Osobista lista odkryć · odległości z Wrocławia</p>
-  <button id="dark-toggle" onclick="toggleDarkMode()" title="Tryb ciemny" style="position:absolute;top:.8rem;right:.8rem;">🌙</button>
+  <svg class="header-mountains" viewBox="0 0 900 160" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="900" height="160" fill="#0a0a18"/>
+    <polygon points="0,160 120,55 240,160" fill="#162016" opacity="0.9"/>
+    <polygon points="80,160 220,25 380,160" fill="#1e2e1e" opacity="0.85"/>
+    <polygon points="200,160 380,40 540,160" fill="#18182e" opacity="0.9"/>
+    <polygon points="340,160 500,60 640,160" fill="#201820" opacity="0.8"/>
+    <polygon points="480,160 640,35 800,160" fill="#1e2a1e" opacity="0.85"/>
+    <polygon points="660,160 780,65 900,120 900,160" fill="#18182e" opacity="0.9"/>
+    <polygon points="0,160 60,90 140,120 220,70 320,105 420,55 520,90 620,50 720,80 820,45 900,70 900,160" fill="#0a0a18" opacity="0.6"/>
+    <line x1="0" y1="156" x2="900" y2="156" stroke="#c9a84c" stroke-width="2" opacity="0.5"/>
+  </svg>
+  <div class="header-content">
+    <h1>Atrakcje <span>Dolnego Śląska</span></h1>
+    <p class="subtitle">Osobista lista odkryć · odległości z Wrocławia</p>
+  </div>
+  <button id="dark-toggle" onclick="toggleDarkMode()" title="Tryb ciemny">🌙</button>
 </header>
 <div id="pixabay-setup" style="display:none;">
   <div class="px-box">
@@ -609,6 +708,10 @@ body.dark-mode #dark-toggle { background: var(--ink); color: var(--paper); }
   </div>
 </div>
 <div class="progress-bar"><div class="progress-fill" id="pf" style="width:0%"></div></div>
+<div class="view-toggle">
+  <button class="view-btn active" id="view-btn-card" onclick="setView('card')">▦ Karty</button>
+  <button class="view-btn" id="view-btn-list" onclick="setView('list')">≡ Lista</button>
+</div>
 <div class="activity-filter-row" id="activity-row" style="display:none;">
   <button class="act-btn active" data-act="all" onclick="toggleAct('all')">✕ Wszystkie</button>
   <button class="act-btn" data-act="trekking" onclick="toggleAct('trekking')">🥾 Trekking</button>
@@ -850,7 +953,7 @@ body.dark-mode #dark-toggle { background: var(--ink); color: var(--paper); }
   </div>
 </div>
 
-<footer>Kliknij nazwę aby zaznaczyć · 📖 opis · 📷 zdjęcia · ⭐ ocena · 📝 notatka</footer>
+<footer>Kliknij nazwę aby zaznaczyć · 📖 opis · 📷 zdjęcia · ⭐ ocena · 📝 notatka <span style="margin-left:1rem;opacity:.4;font-size:.65rem;letter-spacing:.08em;">© TSz</span></footer>
 <div id="badge-toast"><div class="bt-icon"></div><div class="bt-title">Nowa odznaka!</div><div class="bt-name"></div><div class="bt-desc"></div></div>
 <script>
 // Complete DATA array with GPS coords, corrected distances from Wrocław, kids flags
@@ -3733,6 +3836,122 @@ function showBadgeToast(badge){
     if(b.check(done, userData, catDone, actCounts)) earnedBadges.add(b.id);
   });
   localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
+})();
+
+
+// ══════════════════════════════════════════════════════
+// WIDOK KART / LISTA
+// ══════════════════════════════════════════════════════
+let currentView = localStorage.getItem('view-mode') || 'card';
+
+window.setView = function(mode){
+  currentView = mode;
+  localStorage.setItem('view-mode', mode);
+  document.getElementById('view-btn-card').classList.toggle('active', mode==='card');
+  document.getElementById('view-btn-list').classList.toggle('active', mode==='list');
+  applyViewMode();
+};
+
+function applyViewMode(){
+  document.querySelectorAll('.items-list').forEach(list=>{
+    list.classList.toggle('card-view', currentView==='card');
+    list.classList.toggle('list-view', currentView==='list');
+  });
+  // Rebuild items for card view (needs thumb)
+  if(currentView==='card') rebuildCardItems();
+}
+
+function rebuildCardItems(){
+  document.querySelectorAll('.items-list.card-view .item').forEach(el=>{
+    if(el.querySelector('.card-thumb')) return; // already built
+    const key = el.dataset.key;
+    const [ci,ii] = key.split('-').map(Number);
+    const item = DATA[ci]?.items[ii];
+    if(!item) return;
+    const ud = userData[key]||{};
+    const isChecked = !!checked[key];
+
+    // Rebuild inner HTML for card view
+    const catEmoji = DATA[ci].cat.split(' ')[0];
+    const inPlan = plannerItems.includes(key);
+    const stars = ud.rating ? '★'.repeat(ud.rating) : '';
+    const kids = item.kids ? '<span class="kids-badge" style="font-size:.55rem;padding:.1rem .3rem;">👶</span>' : '';
+    const customPhoto = ud.customPhoto;
+
+    el.innerHTML = `
+      <div class="card-thumb ct-${ci % 10}">
+        ${customPhoto
+          ? `<img src="${customPhoto}" alt="${item.name}">`
+          : item._cachedImg
+            ? `<img src="${item._cachedImg}" alt="${item.name}">`
+            : `<span class="card-thumb-emoji">${catEmoji}</span>`
+        }
+      </div>
+      <div class="card-body-wrap">
+        <div class="card-check-name">
+          <div class="card-chk">${isChecked?'✓':''}</div>
+          <div class="item-name" style="font-size:.8rem;line-height:1.25">${item.name}${kids}</div>
+        </div>
+        <div class="item-short" style="font-size:.66rem">${item.short||''}</div>
+        ${stars?`<div class="item-stars" style="font-size:.7rem">${stars}</div>`:''}
+        <div class="item-meta" style="margin-top:.25rem">
+          ${item.km?`<span class="badge badge-dist">📍 ${item.km} km</span>`:''}
+          <button class="add-to-plan-btn${inPlan?' in-plan':''}" onclick="togglePlanItem('${key}',this)">+ Plan</button>
+          <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">📖</button>
+        </div>
+      </div>`;
+
+    // Re-attach checkbox click
+    const chk = el.querySelector('.card-chk');
+    if(chk) chk.addEventListener('click', e=>toggle(key,el,e));
+    const nameEl = el.querySelector('.item-name');
+    if(nameEl) nameEl.addEventListener('click', e=>toggle(key,el,e));
+  });
+}
+
+// ── Kategorie - dodaj klasy + nowe nagłówki ──
+function applyCategoryStyles(){
+  document.querySelectorAll('.category-section').forEach((sec,ci)=>{
+    sec.classList.add(`cat-${ci}`);
+  });
+}
+
+// ── Patch render aby używał nowego stylu kategorii ──
+const _origRenderRedesign = render;
+window.render = function(){
+  _origRenderRedesign();
+  applyCategoryStyles();
+  rebuildCategoryHeaders();
+  applyViewMode();
+};
+
+function rebuildCategoryHeaders(){
+  document.querySelectorAll('.category-section').forEach((sec,ci)=>{
+    const header = sec.querySelector('.category-header');
+    if(!header) return;
+    const cat = DATA[ci];
+    if(!cat) return;
+    const catIcon = cat.cat.split(' ')[0];
+    const catName = cat.cat.replace(/^\S+ /,'');
+    const total = cat.items.length;
+    const done = cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length;
+    const pct = Math.round(done/total*100);
+    header.innerHTML = `
+      <span class="cat-pill">${catIcon} ${catName}</span>
+      <div class="cat-progress-wrap"><div class="cat-progress-bar" style="width:${pct}%"></div></div>
+      <span class="cat-count">${done}/${total}</span>
+      <span class="cat-toggle">▾</span>`;
+  });
+}
+
+// Init view mode
+(function initView(){
+  const saved = localStorage.getItem('view-mode') || 'card';
+  currentView = saved;
+  const btnCard = document.getElementById('view-btn-card');
+  const btnList = document.getElementById('view-btn-list');
+  if(btnCard) btnCard.classList.toggle('active', saved==='card');
+  if(btnList) btnList.classList.toggle('active', saved==='list');
 })();
 
 
