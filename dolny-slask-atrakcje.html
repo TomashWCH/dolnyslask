@@ -830,6 +830,7 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
       <div class="data-section">
         <div class="data-section-title">📖 Dziennik podróżniczy (PDF)</div>
         <p>Drukuje książeczkę ze wszystkich zaliczonych miejsc — okładka + jedna strona na atrakcję z opisem, oceną i notatką.</p>
+        <button class="data-btn data-btn-import" id="preload-btn" onclick="preloadJournalPhotos()">📷 Przygotuj zdjęcia do druku</button>
         <button class="data-btn data-btn-pdf" onclick="printJournal()">🖨 Drukuj dziennik PDF</button>
       </div>
 
@@ -2514,8 +2515,8 @@ window.printJournal = function(){
       </div>`;
 
     if(item.img){
-      const printSrc = item._cachedImg || item.img;
-      html += `<img class="pj-img" src="${printSrc}" alt="${item.name}" onerror="this.style.display='none'">`;
+      const printSrc = (userData[entry.key]||{}).customPhoto || item._cachedImg || null;
+      if(printSrc) html += `<img class="pj-img" src="${printSrc}" alt="${item.name}" onerror="this.style.display='none'">`;
     }
 
     html += `<div class="pj-desc-label">O tym miejscu</div>
@@ -4031,6 +4032,63 @@ function rebuildCategoryHeaders(){
   }, 0);
 })();
 
+
+// ══════════════════════════════════════════════════════
+// PRELOAD ZDJĘĆ DO DRUKU
+// ══════════════════════════════════════════════════════
+window.preloadJournalPhotos = async function(){
+  const pxKey = localStorage.getItem('pixabay-key');
+  const btn = document.getElementById('preload-btn');
+
+  // Zbierz zaliczone miejsca bez zdjęć
+  const todo = [];
+  DATA.forEach((cat,ci)=>{
+    cat.items.forEach((item,ii)=>{
+      const key = getKey(ci,ii);
+      if(!checked[key]) return;
+      const ud = userData[key]||{};
+      if(ud.customPhoto || item._cachedImg) return; // już ma
+      todo.push({item, key});
+    });
+  });
+
+  if(todo.length===0){
+    btn.textContent = '✓ Zdjęcia gotowe!';
+    btn.style.background = 'var(--moss)';
+    btn.style.color = 'white';
+    setTimeout(()=>{ btn.textContent = '📷 Przygotuj zdjęcia do druku'; btn.style.background=''; btn.style.color=''; }, 3000);
+    return;
+  }
+
+  if(!pxKey){
+    alert('Wpisz najpierw klucz API Pixabay (przycisk 🔑 poniżej).');
+    return;
+  }
+
+  btn.textContent = `⏳ Ładuję zdjęcia... 0/${todo.length}`;
+  btn.disabled = true;
+
+  let done = 0;
+  for(const {item} of todo){
+    const pxQuery = item.pxq || item.name.split('(')[0].trim();
+    try {
+      const r = await fetch(`https://pixabay.com/api/?key=${pxKey}&q=${encodeURIComponent(pxQuery)}&image_type=photo&per_page=3&safesearch=true&orientation=horizontal`);
+      const data = await r.json();
+      const hit = (data.hits||[])[0];
+      if(hit) item._cachedImg = hit.webformatURL;
+    } catch(e){ /* skip */ }
+    done++;
+    btn.textContent = `⏳ Ładuję zdjęcia... ${done}/${todo.length}`;
+    // Krótka przerwa żeby nie przeciążyć API
+    await new Promise(res=>setTimeout(res, 120));
+  }
+
+  btn.textContent = `✓ Gotowe! ${todo.length} zdjęć załadowanych`;
+  btn.style.background = 'var(--moss)';
+  btn.style.color = 'white';
+  btn.disabled = false;
+  setTimeout(()=>{ btn.textContent = '📷 Przygotuj zdjęcia do druku'; btn.style.background=''; btn.style.color=''; }, 4000);
+};
 
 </script>
 </body>
