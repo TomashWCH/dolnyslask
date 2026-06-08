@@ -3946,6 +3946,7 @@ function lazyLoadCardPhotos(){
             img.src = hit.webformatURL;
             img.alt = item.name;
             img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+            img.onload = ()=>{ const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove(); };
             img.onerror = ()=> img.remove();
             thumbEl.appendChild(img);
           }
@@ -3970,6 +3971,7 @@ window.openModal = function(item, key){
         img.src = item._cachedImg;
         img.alt = item.name;
         img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+        img.onload = ()=>{ const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove(); };
         img.onerror = ()=> img.remove();
         thumbEl.appendChild(img);
       }
