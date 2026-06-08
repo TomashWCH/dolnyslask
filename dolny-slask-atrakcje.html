@@ -369,6 +369,24 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
   button#geo-btn .btn-label{display:none;}
   button#geo-btn{padding:.35rem .5rem;}
 }
+
+/* ── NEARBY IN MODAL ── */
+.modal-nearby{margin:.8rem 0 0;padding-top:.8rem;border-top:1px solid rgba(0,0,0,.08);}
+.nearby-title{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;}
+.nearby-tabs{display:flex;gap:.3rem;margin-bottom:.6rem;}
+.nearby-tab{font-size:.68rem;font-weight:700;padding:.25rem .6rem;border:1.5px solid rgba(0,0,0,.12);background:none;cursor:pointer;border-radius:10px;color:var(--muted);font-family:'Lato',sans-serif;transition:all .15s;}
+.nearby-tab.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.nearby-list{display:flex;flex-direction:column;gap:.35rem;max-height:220px;overflow-y:auto;}
+.nearby-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;background:var(--parchment);border-radius:3px;border:1px solid rgba(0,0,0,.06);cursor:pointer;transition:background .15s;}
+.nearby-item:hover{background:#e8e3d5;}
+.nearby-icon{font-size:1rem;min-width:22px;text-align:center;}
+.nearby-body{flex:1;min-width:0;}
+.nearby-name{font-size:.78rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nearby-meta{font-size:.65rem;color:var(--muted);}
+.nearby-dist{font-size:.65rem;color:var(--sky);white-space:nowrap;margin-left:auto;}
+.nearby-badge{font-size:.58rem;background:rgba(74,103,65,.15);color:var(--moss);padding:.1rem .35rem;border-radius:8px;font-weight:700;margin-left:.3rem;}
+.nearby-loading{font-size:.75rem;color:var(--muted);font-style:italic;padding:.3rem 0;}
+.nearby-empty{font-size:.75rem;color:var(--muted);font-style:italic;padding:.3rem 0;}
 </style>
 </head>
 <body>
@@ -631,6 +649,19 @@ button#planner-btn.active{background:var(--ink);color:var(--paper);}
             <input type="url" id="modal-photos-url" class="modal-input" placeholder="https://photos.google.com/..." oninput="saveUserData()">
           </div>
         </div>
+
+        <!-- NEARBY -->
+        <div class="modal-nearby">
+          <div class="nearby-title">📍 W pobliżu (30 km)</div>
+          <div class="nearby-tabs">
+            <button class="nearby-tab active" onclick="showNearbyTab('our',this)">Nasza lista</button>
+            <button class="nearby-tab" onclick="showNearbyTab('osm',this)">Inne atrakcje</button>
+          </div>
+          <div class="nearby-list" id="nearby-list">
+            <div class="nearby-loading">Kliknij zakładkę aby załadować...</div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2813,6 +2844,183 @@ window.weekendToPlanner = function(keys){
   sat.setDate(today.getDate()+daysUntilSat);
   inp.value=sat.toISOString().split('T')[0];
 })();
+
+
+// ══════════════════════════════════════════════════════
+// NEARBY ATTRACTIONS
+// ══════════════════════════════════════════════════════
+let nearbyCurrentTab = 'our';
+let nearbyCurrentItem = null;
+
+// OSM category -> icon + label
+const OSM_CATS = {
+  'tourism=attraction':    {icon:'🎯', label:'Atrakcja'},
+  'tourism=museum':        {icon:'🏛️', label:'Muzeum'},
+  'tourism=zoo':           {icon:'🦁', label:'Zoo'},
+  'tourism=aquarium':      {icon:'🐠', label:'Akwarium'},
+  'tourism=theme_park':    {icon:'🎡', label:'Park rozrywki'},
+  'tourism=viewpoint':     {icon:'🔭', label:'Punkt widokowy'},
+  'tourism=gallery':       {icon:'🖼️', label:'Galeria'},
+  'historic=castle':       {icon:'🏰', label:'Zamek'},
+  'historic=monument':     {icon:'🗿', label:'Monument'},
+  'historic=ruins':        {icon:'🏚️', label:'Ruiny'},
+  'historic=memorial':     {icon:'🕊️', label:'Pomnik pamięci'},
+  'leisure=nature_reserve':{icon:'🌿', label:'Rezerwat'},
+  'leisure=park':          {icon:'🌳', label:'Park'},
+  'leisure=garden':        {icon:'🌸', label:'Ogród'},
+  'amenity=place_of_worship':{icon:'⛪', label:'Kościół/Świątynia'},
+  'natural=peak':          {icon:'⛰️', label:'Szczyt'},
+  'waterway=waterfall':    {icon:'💧', label:'Wodospad'},
+};
+
+function osmIcon(tags){
+  for(const [key, val] of Object.entries(OSM_CATS)){
+    const [k,v] = key.split('=');
+    if(tags[k]===v) return val;
+  }
+  return {icon:'📍', label:'Miejsce'};
+}
+
+window.showNearbyTab = function(tab, btn){
+  nearbyCurrentTab = tab;
+  document.querySelectorAll('.nearby-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(!nearbyCurrentItem) return;
+  if(tab==='our'){
+    renderNearbyOur(nearbyCurrentItem);
+  } else {
+    renderNearbyOSM(nearbyCurrentItem);
+  }
+};
+
+function renderNearbyOur(item){
+  const el = document.getElementById('nearby-list');
+  if(!item.lat){ el.innerHTML='<div class="nearby-empty">Brak danych GPS dla tej atrakcji.</div>'; return; }
+
+  // Find all items from our list within 30km
+  const nearby = [];
+  DATA.forEach((cat,ci)=>{
+    cat.items.forEach((itm,ii)=>{
+      if(!itm.lat||!itm.lng) return;
+      if(itm.name===item.name) return; // skip self
+      const d = Math.round(haversine(item.lat,item.lng,itm.lat,itm.lng));
+      if(d<=30) nearby.push({itm, ci, ii, d, catName:cat.cat.replace(/^\S+ /,''), catIcon:cat.cat.split(' ')[0]});
+    });
+  });
+
+  nearby.sort((a,b)=>a.d-b.d);
+
+  if(nearby.length===0){
+    el.innerHTML='<div class="nearby-empty">Brak innych atrakcji z naszej listy w promieniu 30 km.</div>';
+    return;
+  }
+
+  el.innerHTML = nearby.map(({itm,ci,ii,d,catName,catIcon})=>{
+    const key = getKey(ci,ii);
+    const isDone = !!checked[key];
+    const ud = userData[key]||{};
+    const stars = ud.rating ? '★'.repeat(ud.rating) : '';
+    return `<div class="nearby-item" onclick="closeModalBtn();setTimeout(()=>openModal(DATA[${ci}].items[${ii}],'${key}'),200)">
+      <span class="nearby-icon">${catIcon}</span>
+      <div class="nearby-body">
+        <div class="nearby-name">${itm.name}${isDone?'<span class="nearby-badge">✓ zaliczone</span>':''}${stars?`<span style="color:#f0b429;font-size:.65rem;margin-left:.2rem">${stars}</span>`:''}</div>
+        <div class="nearby-meta">${catName}</div>
+      </div>
+      <span class="nearby-dist">${d} km</span>
+    </div>`;
+  }).join('');
+}
+
+function renderNearbyOSM(item){
+  const el = document.getElementById('nearby-list');
+  if(!item.lat){ el.innerHTML='<div class="nearby-empty">Brak danych GPS dla tej atrakcji.</div>'; return; }
+
+  el.innerHTML='<div class="nearby-loading">⏳ Pobieram atrakcje z OpenStreetMap...</div>';
+
+  const radius = 30000; // 30km in meters
+  const query = `
+[out:json][timeout:15];
+(
+  node["tourism"~"^(attraction|museum|zoo|aquarium|theme_park|viewpoint|gallery)$"](around:${radius},${item.lat},${item.lng});
+  node["historic"~"^(castle|monument|ruins|memorial)$"](around:${radius},${item.lat},${item.lng});
+  node["leisure"~"^(nature_reserve|park|garden)$"](around:${radius},${item.lat},${item.lng});
+  node["waterway"="waterfall"](around:${radius},${item.lat},${item.lng});
+  way["tourism"~"^(attraction|museum|zoo|aquarium|theme_park)$"](around:${radius},${item.lat},${item.lng});
+  way["historic"~"^(castle|ruins)$"](around:${radius},${item.lat},${item.lng});
+);
+out center 50;
+`;
+
+  fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'data=' + encodeURIComponent(query)
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    const elements = data.elements || [];
+
+    // Filter: must have a name, not be same as current item
+    const results = elements
+      .filter(e=>{
+        const name = e.tags?.name || e.tags?.['name:pl'] || '';
+        if(!name || name.length < 2) return false;
+        if(name === item.name) return false;
+        return true;
+      })
+      .map(e=>{
+        const lat = e.lat || e.center?.lat;
+        const lng = e.lon || e.center?.lon;
+        const d = (lat&&lng) ? Math.round(haversine(item.lat,item.lng,lat,lng)) : 999;
+        const tags = e.tags || {};
+        const name = tags['name:pl'] || tags.name || 'Nieznana nazwa';
+        const {icon, label} = osmIcon(tags);
+        const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(name)}/@${lat},${lng},14z`;
+        return {name, icon, label, d, lat, lng, mapsUrl, tags};
+      })
+      .filter(r=>r.d<=30)
+      // Deduplicate by name
+      .filter((r,i,arr)=>arr.findIndex(x=>x.name===r.name)===i)
+      .sort((a,b)=>a.d-b.d)
+      .slice(0,25);
+
+    if(results.length===0){
+      el.innerHTML='<div class="nearby-empty">Brak atrakcji w bazie OpenStreetMap w promieniu 30 km.<br><small>Spróbuj otworzyć Google Maps poniżej.</small></div>';
+      return;
+    }
+
+    el.innerHTML = results.map(r=>`
+      <div class="nearby-item" onclick="window.open('${r.mapsUrl}','_blank')">
+        <span class="nearby-icon">${r.icon}</span>
+        <div class="nearby-body">
+          <div class="nearby-name">${r.name}</div>
+          <div class="nearby-meta">${r.label}</div>
+        </div>
+        <span class="nearby-dist">${r.d} km</span>
+      </div>`
+    ).join('') +
+    `<div style="margin-top:.5rem;text-align:center">
+      <a href="https://www.google.com/maps/search/atrakcje+turystyczne/@${item.lat},${item.lng},12z" target="_blank" style="font-size:.72rem;color:var(--sky);">→ Pokaż więcej w Google Maps</a>
+    </div>`;
+  })
+  .catch(err=>{
+    el.innerHTML=`<div class="nearby-empty">Błąd ładowania danych. Sprawdź połączenie.<br>
+      <a href="https://www.google.com/maps/search/atrakcje+turystyczne/@${item.lat},${item.lng},12z" target="_blank" style="font-size:.72rem;color:var(--sky);">→ Otwórz Google Maps</a>
+    </div>`;
+  });
+}
+
+// Patch openModal to init nearby
+const _origOpenModalNearby = openModal;
+window.openModal = function(item, key){
+  _origOpenModalNearby(item, key);
+  nearbyCurrentItem = item;
+  nearbyCurrentTab = 'our';
+  // Reset tabs
+  document.querySelectorAll('.nearby-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  // Auto-load "our list" tab
+  renderNearbyOur(item);
+};
 
 
 </script>
