@@ -1650,7 +1650,17 @@ function toggle(key,el,e){
   const chkEl = el.querySelector('.checkbox') || el.querySelector('.card-chk');
   if(chkEl) chkEl.textContent = checked[key]?'✓':'';
   updateStats();
-  applyFilters();
+  // Jeśli aktywny filtr done/todo, element może zmienić widoczność — przeładuj filtry
+  // W przeciwnym razie wystarczy wizualna aktualizacja samego elementu
+  if(currentFilter !== 'all'){
+    applyFilters();
+  } else {
+    // Tylko aktualizuj przekreślenie nazwy w card-view
+    if(currentView === 'card'){
+      const nameEl = el.querySelector('.item-name');
+      if(nameEl) nameEl.style.textDecoration = checked[key] ? 'line-through' : '';
+    }
+  }
 }
 
 window.clearAll = function(){
@@ -1769,6 +1779,14 @@ function renderFlat(){
   sec.appendChild(header);
   sec.appendChild(list);
   app.appendChild(sec);
+
+  // Przywróć właściwy widok po przebudowie DOM
+  if(currentView === 'card'){
+    list.classList.add('card-view');
+    rebuildCardItems();
+  } else {
+    list.classList.add('list-view');
+  }
 }
 
 // ── BUILD ITEM ELEMENT ────────────────────────────────────────────────────────
@@ -2724,8 +2742,22 @@ window.applyFilters = function(){
       if(!km) return;
       let fuelEl = el.querySelector('.item-fuel');
       const cost = Math.round(km * 2 * fuelBurn / 100 * fuelPrice);
-      if(!fuelEl){ fuelEl=document.createElement('div'); fuelEl.className='item-fuel'; el.querySelector('.item-body').appendChild(fuelEl); }
-      fuelEl.textContent = `⛽ ~${cost} zł tam i z powrotem`;
+      const bodyEl = el.querySelector('.item-body') || el.querySelector('.card-body-wrap');
+      if(!fuelEl && bodyEl){ fuelEl=document.createElement('div'); fuelEl.className='item-fuel'; bodyEl.appendChild(fuelEl); }
+      if(fuelEl) fuelEl.textContent = `⛽ ~${cost} zł tam i z powrotem`;
+    });
+  }
+  // Po filtracji przywróć właściwy widok
+  if(currentView === 'card'){
+    document.querySelectorAll('.items-list').forEach(list=>{
+      list.classList.add('card-view');
+      list.classList.remove('list-view');
+    });
+    rebuildCardItems();
+  } else if(currentView === 'list'){
+    document.querySelectorAll('.items-list').forEach(list=>{
+      list.classList.add('list-view');
+      list.classList.remove('card-view');
     });
   }
 };
