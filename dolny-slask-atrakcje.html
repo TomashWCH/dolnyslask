@@ -672,6 +672,50 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
 .explorer-bar-wrap{height:6px;background:rgba(0,0,0,.08);border-radius:3px;margin-top:.4rem;overflow:hidden;}
 .explorer-bar{height:100%;border-radius:3px;transition:width .8s ease;}
 .explorer-next{font-size:.65rem;color:var(--muted);margin-top:.2rem;}
+
+/* ── WYSZUKIWARKA ROZSZERZONA ── */
+.search-results-hint{font-size:.7rem;color:var(--muted);padding:.2rem .8rem;font-style:italic;}
+
+/* ── REKOMENDACJE ── */
+.reco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.6rem;margin-top:.5rem;}
+.reco-card{background:var(--parchment);border:1px solid rgba(0,0,0,.08);border-radius:6px;padding:.7rem .8rem;cursor:pointer;transition:all .15s;display:flex;gap:.6rem;align-items:flex-start;}
+.reco-card:hover{border-color:var(--gold);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.reco-icon{font-size:1.4rem;flex-shrink:0;}
+.reco-body{flex:1;min-width:0;}
+.reco-name{font-size:.78rem;font-weight:700;color:var(--ink);line-height:1.3;}
+.reco-reason{font-size:.65rem;color:var(--moss);margin-top:.15rem;}
+.reco-meta{font-size:.62rem;color:var(--muted);margin-top:.15rem;}
+.reco-empty{font-size:.82rem;color:var(--muted);font-style:italic;padding:.3rem 0;}
+
+/* ── WYKRES AKTYWNOŚCI ── */
+.activity-chart{margin-top:.5rem;}
+.activity-months{display:flex;gap:2px;overflow-x:auto;padding-bottom:.3rem;}
+.activity-month{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.activity-month-label{font-size:.55rem;color:var(--muted);text-align:center;margin-bottom:2px;letter-spacing:.04em;}
+.activity-week{display:flex;flex-direction:column;gap:2px;}
+.activity-day{width:11px;height:11px;border-radius:2px;background:rgba(0,0,0,.06);cursor:help;transition:transform .1s;}
+.activity-day:hover{transform:scale(1.3);}
+.activity-day.level-1{background:rgba(74,103,65,.25);}
+.activity-day.level-2{background:rgba(74,103,65,.5);}
+.activity-day.level-3{background:rgba(74,103,65,.75);}
+.activity-day.level-4{background:rgba(74,103,65,1);}
+body.dark-mode .activity-day{background:rgba(255,255,255,.08);}
+body.dark-mode .activity-day.level-1{background:rgba(122,184,122,.3);}
+body.dark-mode .activity-day.level-2{background:rgba(122,184,122,.55);}
+body.dark-mode .activity-day.level-3{background:rgba(122,184,122,.8);}
+body.dark-mode .activity-day.level-4{background:rgba(122,184,122,1);}
+.activity-legend{display:flex;align-items:center;gap:.3rem;margin-top:.4rem;font-size:.62rem;color:var(--muted);}
+.activity-legend-dot{width:11px;height:11px;border-radius:2px;}
+.activity-total{font-size:.72rem;color:var(--muted);margin-top:.3rem;}
+
+/* ── PWA INSTALL BANNER ── */
+#pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ink);color:var(--paper);padding:.8rem 1rem;z-index:100;align-items:center;gap:.8rem;box-shadow:0 -4px 16px rgba(0,0,0,.2);}
+#pwa-banner.show{display:flex;}
+.pwa-banner-text{flex:1;font-size:.82rem;}
+.pwa-banner-text strong{display:block;font-size:.9rem;margin-bottom:.15rem;}
+.pwa-banner-text span{opacity:.7;font-size:.75rem;}
+.pwa-banner-install{font-family:'Lato',sans-serif;font-size:.78rem;font-weight:700;padding:.45rem 1.1rem;background:var(--gold);color:var(--ink);border:none;cursor:pointer;border-radius:3px;white-space:nowrap;}
+.pwa-banner-close{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:1.1rem;padding:.2rem .4rem;}
 </style>
 </head>
 <body>
@@ -704,6 +748,14 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
   </div>
 </div>
 
+<div id="pwa-banner">
+  <div class="pwa-banner-text">
+    <strong>Atrakcje Dolnego Śląska</strong>
+    <span>Dodaj do ekranu głównego dla szybkiego dostępu</span>
+  </div>
+  <button class="pwa-banner-install" onclick="installPWA()">Zainstaluj</button>
+  <button class="pwa-banner-close" onclick="dismissPWA()">✕</button>
+</div>
 <div id="guest-banner">
   👁️ Przeglądasz listę: <span id="guest-name"></span> — tryb podglądu (tylko do odczytu)
   <button onclick="exitGuestMode()">← Wróć do swojej listy</button>
@@ -821,6 +873,18 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
     <div class="stats-section">
       <div class="stats-section-title">Historia wyjazdów</div>
       <div id="stats-timeline"></div>
+    </div>
+
+    <!-- Wykres aktywności -->
+    <div class="stats-section">
+      <div class="stats-section-title">Aktywność odkryć</div>
+      <div id="stats-activity"></div>
+    </div>
+
+    <!-- Rekomendacje -->
+    <div class="stats-section">
+      <div class="stats-section-title">✨ Polecane dla Ciebie</div>
+      <div id="stats-reco"></div>
     </div>
 
     <!-- Badges -->
@@ -1757,7 +1821,10 @@ function applyFilters(){
     const isKids = el.dataset.kids === '1';
 
     const passFilter = currentFilter==='all' || (currentFilter==='done'&&isChecked) || (currentFilter==='todo'&&!isChecked);
-    const passSearch = !currentSearch || name.includes(currentSearch);
+    const passSearch = !currentSearch || name.includes(currentSearch) ||
+      (item.short||'').toLowerCase().includes(currentSearch) ||
+      (item.desc||'').toLowerCase().includes(currentSearch) ||
+      (item.acts||[]).some(a=>a.toLowerCase().includes(currentSearch));
     const passDist   = currentDist===0 || km<=currentDist;
     const passKids   = !kidsOnly || isKids;
 
@@ -4732,6 +4799,242 @@ const _origApplyViewWeather = applyViewMode;
 window.applyViewMode = function(){
   _origApplyViewWeather();
   setTimeout(loadWeatherDots, 300);
+};
+
+
+// ══════════════════════════════════════════════════════
+// WYSZUKIWARKA - podświetl dopasowanie
+// ══════════════════════════════════════════════════════
+const _origApplyFiltersSearch = applyFilters;
+window.applyFilters = function(){
+  _origApplyFiltersSearch();
+  // Pokaż ile wyników
+  if(currentSearch){
+    const visible = document.querySelectorAll('.item:not(.hidden)').length;
+    let hint = document.getElementById('search-hint');
+    if(!hint){
+      hint = document.createElement('div');
+      hint.id = 'search-hint';
+      hint.className = 'search-results-hint';
+      document.getElementById('search-input').parentNode.insertBefore(hint, document.getElementById('search-input').nextSibling);
+    }
+    hint.textContent = `Znaleziono: ${visible} atrakcji`;
+    hint.style.display = 'block';
+  } else {
+    const hint = document.getElementById('search-hint');
+    if(hint) hint.style.display = 'none';
+  }
+};
+
+// ══════════════════════════════════════════════════════
+// REKOMENDACJE
+// ══════════════════════════════════════════════════════
+function renderRecommendations(){
+  const el = document.getElementById('stats-reco');
+  if(!el) return;
+
+  // Zbierz zaliczone miejsca z ocenami
+  const rated = [];
+  DATA.forEach((cat,ci)=>{
+    cat.items.forEach((item,ii)=>{
+      const key = getKey(ci,ii);
+      const ud = userData[key]||{};
+      if(checked[key] && ud.rating >= 4){
+        rated.push({item, rating:ud.rating, ci, catName:cat.cat.replace(/^\S+ /,''), catIcon:cat.cat.split(' ')[0]});
+      }
+    });
+  });
+
+  if(rated.length === 0){
+    el.innerHTML = '<div class="reco-empty">Oceń zaliczone miejsca (4-5★) aby otrzymać rekomendacje podobnych atrakcji.</div>';
+    return;
+  }
+
+  // Oblicz preferencje kategorii i aktywności
+  const catScores = {};
+  const actScores = {};
+  rated.forEach(({item, rating, ci})=>{
+    catScores[ci] = (catScores[ci]||0) + rating;
+    (item.acts||[]).forEach(a=>{ actScores[a] = (actScores[a]||0) + rating; });
+  });
+
+  // Znajdź niezaliczone miejsca i oceń je
+  const candidates = [];
+  DATA.forEach((cat,ci)=>{
+    cat.items.forEach((item,ii)=>{
+      const key = getKey(ci,ii);
+      if(checked[key]) return; // pomijaj zaliczone
+
+      let score = 0;
+      // Bonus za lubianą kategorię
+      score += (catScores[ci]||0) * 2;
+      // Bonus za lubiane aktywności
+      (item.acts||[]).forEach(a=>{ score += (actScores[a]||0) * 1.5; });
+      // Bonus za bliskość (preferuj bliższe)
+      if(item.km) score += Math.max(0, 200 - item.km) * 0.1;
+
+      if(score > 0) candidates.push({
+        item, key, ci, ii, score,
+        catIcon: cat.cat.split(' ')[0],
+        catName: cat.cat.replace(/^\S+ /,'')
+      });
+    });
+  });
+
+  if(candidates.length === 0){
+    el.innerHTML = '<div class="reco-empty">Wszystkie miejsca z ulubionych kategorii już zaliczone! 🎉</div>';
+    return;
+  }
+
+  candidates.sort((a,b)=>b.score-a.score);
+  const top = candidates.slice(0,6);
+
+  // Znajdź powód rekomendacji
+  const topCat = Object.entries(catScores).sort((a,b)=>b[1]-a[1])[0];
+  const topAct = Object.entries(actScores).sort((a,b)=>b[1]-a[1])[0];
+
+  el.innerHTML = `<div style="font-size:.72rem;color:var(--muted);margin-bottom:.5rem;">
+    Na podstawie Twoich ocen — lubisz <strong>${topCat?DATA[topCat[0]].cat.replace(/^\S+ /,''):'odkrywanie'}</strong>${topAct?` i <strong>${topAct[0]}</strong>`:''}:
+  </div>
+  <div class="reco-grid">${top.map(({item,key,ci,ii,catIcon,catName})=>{
+    const reason = catScores[ci] > 0
+      ? `Podobne do Twoich ulubionych`
+      : `Pasuje do Twoich aktywności`;
+    return `<div class="reco-card" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">
+      <div class="reco-icon">${catIcon}</div>
+      <div class="reco-body">
+        <div class="reco-name">${item.name}</div>
+        <div class="reco-reason">${reason}</div>
+        <div class="reco-meta">${item.km||'?'} km · ${catName}</div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// WYKRES AKTYWNOŚCI (GitHub-style)
+// ══════════════════════════════════════════════════════
+function renderActivityChart(){
+  const el = document.getElementById('stats-activity');
+  if(!el) return;
+
+  // Zbierz daty wizyt
+  const dateCounts = {};
+  Object.values(userData).forEach(ud=>{
+    if(ud.date && ud.date.trim()){
+      dateCounts[ud.date] = (dateCounts[ud.date]||0) + 1;
+    }
+  });
+
+  const totalWithDates = Object.values(dateCounts).reduce((s,v)=>s+v, 0);
+  if(totalWithDates === 0){
+    el.innerHTML = '<div class="reco-empty">Zapisz daty wizyt w opisach atrakcji aby zobaczyć wykres aktywności.</div>';
+    return;
+  }
+
+  // Wygeneruj ostatnie 52 tygodnie (1 rok)
+  const today = new Date();
+  const oneYearAgo = new Date(today);
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+  // Zbuduj siatkę tygodni
+  const weeks = [];
+  let current = new Date(oneYearAgo);
+  // Cofnij do początku tygodnia (poniedziałek)
+  const dow = current.getDay();
+  current.setDate(current.getDate() - (dow === 0 ? 6 : dow - 1));
+
+  while(current <= today){
+    const week = [];
+    for(let d=0; d<7; d++){
+      const dateStr = current.toISOString().split('T')[0];
+      const count = dateCounts[dateStr] || 0;
+      const level = count === 0 ? 0 : count === 1 ? 1 : count <= 2 ? 2 : count <= 3 ? 3 : 4;
+      const isInRange = current >= oneYearAgo && current <= today;
+      week.push({dateStr, count, level, inRange: isInRange, day: new Date(current)});
+      current.setDate(current.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+
+  // Grupuj tygodnie po miesiącach
+  const months = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+  let lastMonth = -1;
+  const monthLabels = weeks.map(week=>{
+    const m = week[0].day.getMonth();
+    if(m !== lastMonth){ lastMonth = m; return months[m]; }
+    return '';
+  });
+
+  const html = `<div class="activity-chart">
+    <div class="activity-months">
+      ${weeks.map((week,wi)=>`
+        <div class="activity-month">
+          <div class="activity-month-label">${monthLabels[wi]}</div>
+          ${week.map(day=>
+            day.inRange
+              ? `<div class="activity-day level-${day.level}" title="${day.dateStr}${day.count>0?' · '+day.count+' miejsc':''}"></div>`
+              : `<div class="activity-day" style="opacity:0"></div>`
+          ).join('')}
+        </div>`
+      ).join('')}
+    </div>
+    <div class="activity-legend">
+      <span>Mniej</span>
+      <div class="activity-legend-dot" style="background:rgba(0,0,0,.06)"></div>
+      <div class="activity-legend-dot activity-day level-1"></div>
+      <div class="activity-legend-dot activity-day level-2"></div>
+      <div class="activity-legend-dot activity-day level-3"></div>
+      <div class="activity-legend-dot activity-day level-4"></div>
+      <span>Więcej</span>
+    </div>
+    <div class="activity-total">${totalWithDates} wizyt z zapisaną datą w ostatnim roku</div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// PWA INSTALL BANNER
+// ══════════════════════════════════════════════════════
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Pokaż banner jeśli nie był odrzucony
+  if(!localStorage.getItem('pwa-dismissed')){
+    setTimeout(()=>{
+      document.getElementById('pwa-banner').classList.add('show');
+    }, 3000);
+  }
+});
+
+window.installPWA = function(){
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(result=>{
+    if(result.outcome === 'accepted'){
+      document.getElementById('pwa-banner').classList.remove('show');
+      localStorage.setItem('pwa-dismissed','1');
+    }
+    deferredInstallPrompt = null;
+  });
+};
+
+window.dismissPWA = function(){
+  document.getElementById('pwa-banner').classList.remove('show');
+  localStorage.setItem('pwa-dismissed','1');
+};
+
+// ══════════════════════════════════════════════════════
+// PATCH renderStats
+// ══════════════════════════════════════════════════════
+const _origRenderStatsNew = renderStats;
+window.renderStats = function(){
+  _origRenderStatsNew();
+  renderRecommendations();
+  renderActivityChart();
 };
 
 
