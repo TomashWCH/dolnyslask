@@ -2412,6 +2412,10 @@ function renderStats(){
       ${earned?'<div class="badge-progress" style="color:var(--gold)">✓ Zdobyta!</div>':''}
     </div>`;
   }).join('');
+
+  // Dodatkowe sekcje
+  renderTimeline();
+  renderExplorerLevel();
 }
 // ══════════════════════════════════════════════════════
 // DATA PANEL
@@ -3500,11 +3504,6 @@ function renderTimeline(){
 }
 
 // Patch renderStats to include timeline
-const _origRenderStatsT = renderStats;
-window.renderStats = function(){
-  _origRenderStatsT();
-  renderTimeline();
-};
 
 // ══════════════════════════════════════════════════════
 // MAPA LEAFLET
@@ -4687,11 +4686,6 @@ window.renderPlanner = function(){
 // ══════════════════════════════════════════════════════
 // PATCH renderStats żeby pokazał poziom odkrywcy
 // ══════════════════════════════════════════════════════
-const _origRenderStatsExplorer = renderStats;
-window.renderStats = function(){
-  _origRenderStatsExplorer();
-  renderExplorerLevel();
-};
 
 // ══════════════════════════════════════════════════════
 // PATCH render żeby ładował kropki pogody
