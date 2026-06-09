@@ -647,6 +647,8 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
 .weather-dot.fog{background:#cfd8dc;}
 .item-weather{position:absolute;top:6px;right:6px;}
 .items-list.card-view .item{position:relative;}
+.items-list.list-view .item{position:relative;}
+.items-list.list-view .item-weather{position:absolute;top:4px;right:4px;}
 .items-list.list-view .item-weather{margin-left:auto;flex-shrink:0;}
 
 /* ── POBLISKIE W PLANERZE ── */
@@ -3884,6 +3886,7 @@ function applyViewMode(){
       el.querySelector('.item-name').addEventListener('click',e=>toggle(key,el,e));
     });
     setTimeout(lazyLoadCardPhotos, 50);
+    setTimeout(loadWeatherDots, 300);
   }
 }
 
@@ -4489,6 +4492,7 @@ function renderPlannerNearby(ordered){
     cat.items.forEach((item,ii)=>{
       const key = getKey(ci,ii);
       if(inPlanner.has(key)) return;
+      if(checked[key]) return; // pomiń zaliczone
       if(!item.lat||!item.lng) return;
       let minDist = Infinity;
       routePoints.forEach(pt=>{ const d=haversine(pt.lat,pt.lng,item.lat,item.lng); if(d<minDist) minDist=d; });
@@ -4547,7 +4551,7 @@ window.showPlannerNearbyTab = function(tab, btn){
     DATA.forEach((cat,ci)=>{
       cat.items.forEach((item,ii)=>{
         const key = getKey(ci,ii);
-        if(inPlanner.has(key)||!item.lat||!item.lng) return;
+        if(inPlanner.has(key)||checked[key]||!item.lat||!item.lng) return;
         let minDist=Infinity;
         _plannerRoutePoints.forEach(pt=>{ const d=haversine(pt.lat,pt.lng,item.lat,item.lng); if(d<minDist) minDist=d; });
         if(minDist<=RADIUS) nearby.push({item,key,ci,ii,dist:Math.round(minDist),catIcon:DATA[ci].cat.split(' ')[0],catName:DATA[ci].cat.replace(/^\S+ /,'')});
