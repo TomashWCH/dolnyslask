@@ -3154,7 +3154,8 @@ function renderWeekendResults(results, targetDate){
 
   if(results.length>=3){
     const top3 = results.slice(0,3).map(r=>r.key);
-    html+=`<button class="weekend-route-btn" onclick="weekendToPlanner(${JSON.stringify(top3)})">🗺️ Zaplanuj trasę z TOP 3 miejsc</button>`;
+    const top3str = top3.map(k=>`'${k}'`).join(',');
+    html+=`<button class="weekend-route-btn" onclick="weekendToPlanner([${top3str}])">🗺️ Zaplanuj trasę z TOP 3 miejsc</button>`;
   }
 
   resEl.innerHTML=html;
