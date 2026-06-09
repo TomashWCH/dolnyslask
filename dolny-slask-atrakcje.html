@@ -2891,17 +2891,6 @@ const EXTRA_BADGES = [
   // Aktywność
   {id:'trekker',   icon:'🥾', name:'Trekker',        desc:'Zalicz 10 miejsc wymagających trekkingu',       check:(d,u,cats,acts)=>(acts['trekking']||0)>=10},
   {id:'sightseer', icon:'🏛️', name:'Zwiedzacz',      desc:'Zalicz 15 miejsc do zwiedzania',               check:(d,u,cats,acts)=>(acts['zwiedzanie']||0)>=15},
-  {id:'historian', icon:'📜', name:'Historyk',       desc:'Zalicz 10 atrakcji historycznych',              check:(d,u,cats,acts)=>(acts['historia']||0)>=10},
-  {id:'family5',   icon:'👨‍👩‍👧', name:'Rodzinny wypad', desc:'Zalicz 5 miejsc przyjaznych dzieciom',          check:(d,u,cats)=>{
-    let n=0; DATA.forEach((c,ci)=>c.items.forEach((_,ii)=>{ if(checked[getKey(ci,ii)] && DATA[ci].items[ii].kids) n++; })); return n>=5;
-  }},
-  // Odległość
-  {id:'km500',     icon:'🚗', name:'500 km',          desc:'Łącznie 500 km do zaliczonych miejsc',          check:(d,u)=>{
-    let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; })); return km>=500;
-  }},
-  {id:'km2000',    icon:'🚀', name:'2000 km',         desc:'Łącznie 2000 km do zaliczonych miejsc',         check:(d,u)=>{
-    let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; })); return km>=2000;
-  }},
   // Oceny
   {id:'all5cats',  icon:'🌈', name:'Kolekcjoner',     desc:'Zalicz min. 3 miejsca w każdej kategorii',      check:(d,u,cats)=>cats.every(c=>c>=3)},
   {id:'notatnik',  icon:'📓', name:'Pamiętnikarz',    desc:'Dodaj notatki do 15 miejsc',                   check:(d,u)=>Object.values(u).filter(x=>x.note&&x.note.trim()).length>=15},
@@ -4706,4 +4695,7 @@ window.applyViewMode = function(){
 
 </script>
 </body>
-</html>
+</html>,
+  {id:'family5', icon:'👨‍👩‍👧', name:'Rodzinny wypad', desc:'Zalicz 5 miejsc przyjaznych dzieciom', check:(d,u,cats,acts)=>{
+    let n=0; DATA.forEach((c,ci)=>c.items.forEach((_,ii)=>{ if(checked[getKey(ci,ii)] && DATA[ci].items[ii].kids) n++; })); return n>=5;
+  }}
