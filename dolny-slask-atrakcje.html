@@ -4473,74 +4473,134 @@ function renderExplorerLevel(){
 function renderPlannerNearby(ordered){
   if(ordered.length === 0) return '';
 
-  // Zbierz punkty trasy (Wrocław + atrakcje)
+  // Punkty trasy
   const routePoints = [
     {lat: WROCLAW.lat, lng: WROCLAW.lng},
     ...ordered.map(s=>({lat:s.item.lat, lng:s.item.lng})),
     {lat: WROCLAW.lat, lng: WROCLAW.lng}
   ];
 
-  // Znajdź niezaliczone miejsca z listy w promieniu 30km od dowolnego punktu trasy
   const RADIUS = 30;
-  const nearby = [];
   const inPlanner = new Set(plannerItems);
 
+  // Nasza lista - niezaliczone w promieniu
+  const nearby = [];
   DATA.forEach((cat,ci)=>{
     cat.items.forEach((item,ii)=>{
       const key = getKey(ci,ii);
-      if(inPlanner.has(key)) return; // już w planerze
+      if(inPlanner.has(key)) return;
       if(!item.lat||!item.lng) return;
-
-      // Znajdź min odległość od dowolnego punktu trasy
       let minDist = Infinity;
-      routePoints.forEach(pt=>{
-        const d = haversine(pt.lat, pt.lng, item.lat, item.lng);
-        if(d < minDist) minDist = d;
-      });
-
-      if(minDist <= RADIUS){
-        nearby.push({item, key, ci, ii, dist:Math.round(minDist), catIcon:cat.cat.split(' ')[0], catName:cat.cat.replace(/^\S+ /,'')});
-      }
+      routePoints.forEach(pt=>{ const d=haversine(pt.lat,pt.lng,item.lat,item.lng); if(d<minDist) minDist=d; });
+      if(minDist<=RADIUS) nearby.push({item,key,ci,ii,dist:Math.round(minDist),catIcon:cat.cat.split(' ')[0],catName:cat.cat.replace(/^\S+ /,'')});
     });
   });
-
-  if(nearby.length === 0) return '';
   nearby.sort((a,b)=>a.dist-b.dist);
 
-  let html = `<div class="planner-nearby">
-    <div class="planner-nearby-title">📍 W pobliżu trasy (do 30 km) — ${nearby.length} miejsc</div>
-    <div class="planner-nearby-list">`;
+  return `<div class="planner-nearby">
+    <div class="planner-nearby-title">📍 W pobliżu trasy (30 km)</div>
+    <div class="nearby-tabs" style="margin-bottom:.5rem;">
+      <button class="nearby-tab active" onclick="showPlannerNearbyTab('our',this)">Nasza lista (${nearby.length})</button>
+      <button class="nearby-tab" onclick="showPlannerNearbyTab('osm',this)">Inne atrakcje</button>
+    </div>
+    <div id="planner-nearby-list" class="planner-nearby-list">
+      ${renderPlannerNearbyOur(nearby)}
+    </div>
+  </div>`;
+}
 
-  nearby.slice(0,15).forEach(({item,key,ci,ii,dist,catIcon,catName})=>{
+function renderPlannerNearbyOur(nearby){
+  if(nearby.length===0) return '<div style="font-size:.75rem;color:var(--muted);font-style:italic;padding:.3rem 0">Brak niezaliczonych miejsc z naszej listy w pobliżu trasy.</div>';
+  return nearby.slice(0,15).map(({item,key,ci,ii,dist,catIcon,catName})=>{
     const ud = userData[key]||{};
     const stars = ud.rating ? `<span style="color:#f0b429;font-size:.65rem">${'★'.repeat(ud.rating)}</span>` : '';
     const isChecked = !!checked[key];
-    html += `<div class="planner-nearby-item">
+    const inPlan = plannerItems.includes(key);
+    return `<div class="planner-nearby-item">
       <span style="font-size:1rem">${catIcon}</span>
       <div style="flex:1;min-width:0">
         <div class="pn-name">${item.name}${isChecked?' <span style="color:var(--moss);font-size:.6rem">✓</span>':''} ${stars}</div>
         <div class="pn-cat">${catName}</div>
       </div>
       <span class="pn-dist">${dist} km</span>
-      <button class="planner-nearby-add" id="pna-${key}" onclick="addNearbyToPlanner('${key}','${ci}','${ii}',this)"
-        ${plannerItems.length>=6?'disabled title="Maksymalnie 6 miejsc"':''}>+ Plan</button>
+      <button class="planner-nearby-add${inPlan?' added':''}" id="pna-${key}"
+        onclick="addNearbyToPlanner('${key}','${ci}','${ii}',this)"
+        ${(plannerItems.length>=6&&!inPlan)?'disabled':''}>${inPlan?'✓ W trasie':'+ Plan'}</button>
     </div>`;
-  });
-
-  html += `</div></div>`;
-  return html;
+  }).join('');
 }
 
+// Przechowuj punkty trasy dla OSM
+let _plannerRoutePoints = [];
+
+window.showPlannerNearbyTab = function(tab, btn){
+  document.querySelectorAll('.planner-nearby .nearby-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const listEl = document.getElementById('planner-nearby-list');
+  if(!listEl) return;
+
+  if(tab==='our'){
+    // Odbuduj naszą listę
+    const inPlanner = new Set(plannerItems);
+    const RADIUS = 30;
+    const nearby = [];
+    DATA.forEach((cat,ci)=>{
+      cat.items.forEach((item,ii)=>{
+        const key = getKey(ci,ii);
+        if(inPlanner.has(key)||!item.lat||!item.lng) return;
+        let minDist=Infinity;
+        _plannerRoutePoints.forEach(pt=>{ const d=haversine(pt.lat,pt.lng,item.lat,item.lng); if(d<minDist) minDist=d; });
+        if(minDist<=RADIUS) nearby.push({item,key,ci,ii,dist:Math.round(minDist),catIcon:DATA[ci].cat.split(' ')[0],catName:DATA[ci].cat.replace(/^\S+ /,'')});
+      });
+    });
+    nearby.sort((a,b)=>a.dist-b.dist);
+    listEl.innerHTML = renderPlannerNearbyOur(nearby);
+  } else {
+    // OSM - użyj środka trasy jako centrum zapytania
+    const center = _plannerRoutePoints[Math.floor(_plannerRoutePoints.length/2)] || WROCLAW;
+    listEl.innerHTML = '<div class="nearby-loading">⏳ Pobieram atrakcje z OpenStreetMap...</div>';
+    const radius = 30000;
+    const query = `[out:json][timeout:15];(node["tourism"~"^(attraction|museum|zoo|aquarium|theme_park|viewpoint)$"](around:${radius},${center.lat},${center.lng});node["historic"~"^(castle|monument|ruins)$"](around:${radius},${center.lat},${center.lng});way["tourism"~"^(attraction|museum|zoo)$"](around:${radius},${center.lat},${center.lng});way["historic"~"^(castle|ruins)$"](around:${radius},${center.lat},${center.lng}););out center 40;`;
+    fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(query)})
+      .then(r=>r.json())
+      .then(data=>{
+        const results = (data.elements||[])
+          .filter(e=>e.tags?.name && e.tags.name.length>2)
+          .map(e=>{
+            const lat=e.lat||e.center?.lat, lng=e.lon||e.center?.lon;
+            const d=lat&&lng?Math.round(haversine(center.lat,center.lng,lat,lng)):999;
+            const tags=e.tags||{};
+            const name=tags['name:pl']||tags.name||'';
+            const {icon,label}=osmIcon(tags);
+            const mapsUrl=`https://www.google.com/maps/search/${encodeURIComponent(name)}/@${lat},${lng},14z`;
+            return {name,icon,label,d,mapsUrl};
+          })
+          .filter((r,i,arr)=>r.d<=30&&arr.findIndex(x=>x.name===r.name)===i)
+          .sort((a,b)=>a.d-b.d)
+          .slice(0,20);
+
+        if(results.length===0){ listEl.innerHTML='<div class="nearby-empty">Brak wyników z OpenStreetMap.</div>'; return; }
+        listEl.innerHTML = results.map(r=>`
+          <div class="planner-nearby-item" onclick="window.open('${r.mapsUrl}','_blank')" style="cursor:pointer;">
+            <span style="font-size:1rem">${r.icon}</span>
+            <div style="flex:1;min-width:0"><div class="pn-name">${r.name}</div><div class="pn-cat">${r.label}</div></div>
+            <span class="pn-dist">${r.d} km</span>
+          </div>`).join('') +
+          `<div style="margin-top:.4rem;text-align:center"><a href="https://www.google.com/maps/search/atrakcje+turystyczne/@${center.lat},${center.lng},11z" target="_blank" style="font-size:.7rem;color:var(--sky);">→ Więcej w Google Maps</a></div>`;
+      })
+      .catch(()=>{ listEl.innerHTML='<div class="nearby-empty">Błąd ładowania. Sprawdź połączenie.</div>'; });
+  }
+};
+
 window.addNearbyToPlanner = function(key, ci, ii, btn){
-  if(plannerItems.length >= 6){ alert('Maksymalnie 6 atrakcji w trasie.'); return; }
+  if(plannerItems.length>=6){ alert('Maksymalnie 6 atrakcji w trasie.'); return; }
   if(plannerItems.includes(key)) return;
   plannerItems.push(key);
   savePlanner();
   updatePlannerBadge();
-  btn.textContent = '✓ Dodano';
+  btn.textContent='✓ W trasie';
   btn.classList.add('added');
-  btn.disabled = true;
-  // Przebuduj planer z nowym miejscem i zaktualizuj TSP
+  btn.disabled=true;
   renderPlanner();
 };
 
@@ -4548,19 +4608,20 @@ window.addNearbyToPlanner = function(key, ci, ii, btn){
 const _origRenderPlanner = renderPlanner;
 window.renderPlanner = function(){
   _origRenderPlanner();
-  // Po wyrenderowaniu dodaj sekcję pobliskich
-  const content = document.getElementById('planner-content');
-  if(!content) return;
-  if(plannerItems.length === 0) return;
-
-  // Odtwórz ordered z aktualnych plannerItems przez TSP
-  const stops = plannerItems.map(key=>({key, item:keyToItem(key)})).filter(s=>s.item?.lat);
-  if(stops.length === 0) return;
+  const plannerContent = document.getElementById('planner-content');
+  if(!plannerContent || plannerItems.length===0) return;
+  const stops = plannerItems.map(key=>({key,item:keyToItem(key)})).filter(s=>s.item?.lat);
+  if(stops.length===0) return;
   const {order} = solveTSP(stops);
   const ordered = order.map(i=>stops[i]);
-
+  // Zapisz punkty trasy dla OSM
+  _plannerRoutePoints = [
+    {lat:WROCLAW.lat,lng:WROCLAW.lng},
+    ...ordered.map(s=>({lat:s.item.lat,lng:s.item.lng})),
+    {lat:WROCLAW.lat,lng:WROCLAW.lng}
+  ];
   const nearbyHtml = renderPlannerNearby(ordered);
-  if(nearbyHtml) content.insertAdjacentHTML('beforeend', nearbyHtml);
+  if(nearbyHtml) plannerContent.insertAdjacentHTML('beforeend', nearbyHtml);
 };
 
 // ══════════════════════════════════════════════════════
