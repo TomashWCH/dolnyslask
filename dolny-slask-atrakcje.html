@@ -2771,17 +2771,6 @@ window.applyFilters = function(){
 // ══════════════════════════════════════════════════════
 // PATCH openModal to show fuel info
 // ══════════════════════════════════════════════════════
-const _origOpenModal = openModal;
-window.openModal = function(item, key){
-  _origOpenModal(item, key);
-  updateModalFuel();
-  // Show activity badges in modal
-  const actsEl = document.getElementById('modal-acts');
-  if(actsEl && item.acts){
-    const icons = {trekking:'🥾',spacer:'🚶',zwiedzanie:'🏛️',widoki:'🔭',fotografia:'📷',historia:'📜',rodzinne:'👨‍👩‍👧',nauka:'🔬',kultura:'🎭',relaks:'🧘',przyroda:'🌿',pielgrzymka:'✝️','sporty wodne':'🛶',architektura:'🏗️'};
-    actsEl.innerHTML = item.acts.map(a=>`<span class="act-badge">${icons[a]||''} ${a}</span>`).join('');
-  }
-};
 
 // ══════════════════════════════════════════════════════
 // STATS ENHANCEMENTS - km total + heatmap
@@ -2958,11 +2947,6 @@ function loadModalWeather(item){
 }
 
 // Patch openModal to load weather
-const _origOpenModalB = openModal;
-window.openModal = function(item, key){
-  _origOpenModalB(item, key);
-  loadModalWeather(item);
-};
 
 // ══════════════════════════════════════════════════════
 // GEOLOCATION
@@ -3346,16 +3330,6 @@ out center 50;
 }
 
 // Patch openModal to init nearby
-const _origOpenModalNearby = openModal;
-window.openModal = function(item, key){
-  _origOpenModalNearby(item, key);
-  nearbyCurrentItem = item;
-  nearbyCurrentTab = 'our';
-  // Reset tabs
-  document.querySelectorAll('.nearby-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
-  // Auto-load "our list" tab
-  renderNearbyOur(item);
-};
 
 
 // more-menu removed
@@ -3590,11 +3564,6 @@ function updateMapMarkers(){
 }
 
 // Refresh map markers when item is checked/unchecked
-const _origToggle = toggle;
-window.toggle = function(key, el, e){
-  _origToggle(key, el, e);
-  if(leafletMap) updateMapMarkers();
-};
 
 
 // ── SERVICE WORKER REGISTRATION ──
@@ -3674,25 +3643,6 @@ window.removeCustomPhoto = function(){
 };
 
 // Patch openModal to show custom photo if available
-const _origOpenModalCustom = openModal;
-window.openModal = function(item, key){
-  _origOpenModalCustom(item, key);
-  // Show/hide remove button based on custom photo
-  const ud = userData[key] || {};
-  const removeBtn = document.getElementById('remove-photo-btn');
-  if(removeBtn) removeBtn.style.display = ud.customPhoto ? 'inline-flex' : 'none';
-  // If custom photo exists, override with it
-  if(ud.customPhoto){
-    const wrap = document.getElementById('modal-img-wrap');
-    wrap.innerHTML = '';
-    const img = document.createElement('img');
-    img.className = 'modal-img';
-    img.src = ud.customPhoto;
-    img.style.objectFit = 'cover';
-    wrap.appendChild(img);
-    item._cachedImg = ud.customPhoto;
-  }
-};
 
 // ══════════════════════════════════════════════════════
 // SHARE - WhatsApp i Kopiuj
@@ -3811,23 +3761,6 @@ Object.entries(_panels).forEach(([panelId, fnName])=>{
 // ══════════════════════════════════════════════════════
 // 2. EFEKT ZAZNACZANIA
 // ══════════════════════════════════════════════════════
-const _origToggleAnim = toggle;
-window.toggle = function(key, el, e){
-  const wasChecked = !!checked[key];
-  _origToggleAnim(key, el, e);
-  // Dodaj klasę animacji tylko przy zaznaczaniu (nie odznaczaniu)
-  if(!wasChecked && checked[key]){
-    el.classList.add('just-checked');
-    setTimeout(()=> el.classList.remove('just-checked'), 600);
-    // Sprawdź czy zdobyto nową odznakę
-    checkNewBadges();
-  }
-  // Bug fix #2: odśwież panel odznak jeśli jest otwarty
-  const statsPanel = document.getElementById('stats-panel');
-  if(statsPanel && statsPanel.style.display !== 'none') {
-    renderStats();
-  }
-};
 
 // ══════════════════════════════════════════════════════
 // 3. POWIADOMIENIE O ODZNACE
@@ -4105,25 +4038,6 @@ function lazyLoadCardPhotos(){
 }
 
 // Odśwież miniatury po załadowaniu zdjęcia w modalu
-const _origOpenModalThumb = openModal;
-window.openModal = function(item, key){
-  _origOpenModalThumb(item, key);
-  // Po zamknięciu modalu sprawdź czy karta ma już zdjęcie
-  setTimeout(()=>{
-    if(item._cachedImg){
-      const thumbEl = document.getElementById('thumb-'+key);
-      if(thumbEl && !thumbEl.querySelector('img')){
-        const img = document.createElement('img');
-        img.src = item._cachedImg;
-        img.alt = item.name;
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
-        img.onload = ()=>{ const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove(); };
-        img.onerror = ()=> img.remove();
-        thumbEl.appendChild(img);
-      }
-    }
-  }, 500);
-};
 
 // ── Kategorie - dodaj klasy + nowe nagłówki ──
 function applyCategoryStyles(){
@@ -4232,6 +4146,136 @@ window.preloadJournalPhotos = async function(){
   btn.style.color = 'white';
   btn.disabled = false;
   setTimeout(()=>{ btn.textContent = '📷 Przygotuj zdjęcia do druku'; btn.style.background=''; btn.style.color=''; }, 4000);
+};
+
+// ══════════════════════════════════════════════════════
+// OPENMODAL - skonsolidowana wersja
+// ══════════════════════════════════════════════════════
+window.openModal = function(item, key){
+  currentItem = {item, key};
+  document.getElementById('modal-title').textContent = item.name;
+
+  const mapsUrl = 'https://www.google.com/maps/dir/Wrocław,Poland/' + encodeURIComponent(item.name + ' Dolny Śląsk');
+  document.getElementById('modal-nav').href = mapsUrl;
+  document.getElementById('modal-desc').textContent = item.desc;
+
+  // Kids info
+  let kidsEl = document.getElementById('modal-kids-info');
+  if(!kidsEl){
+    kidsEl = document.createElement('div');
+    kidsEl.id = 'modal-kids-info';
+    kidsEl.style = 'margin:.4rem 0;font-size:.8rem;color:#b06a00;background:rgba(255,180,0,.1);padding:.4rem .7rem;border-radius:3px;';
+    document.getElementById('modal-desc').before(kidsEl);
+  }
+  if(item.kids){ kidsEl.innerHTML = '👶 <strong>Atrakcje dla dzieci:</strong> ' + item.kids; kidsEl.style.display='block'; }
+  else { kidsEl.style.display='none'; }
+
+  // Activity badges
+  const actsEl = document.getElementById('modal-acts');
+  if(actsEl && item.acts){
+    const icons = {trekking:'🥾',spacer:'🚶',zwiedzanie:'🏛️',widoki:'🔭',fotografia:'📷',historia:'📜',rodzinne:'👨‍👩‍👧',nauka:'🔬',kultura:'🎭',relaks:'🧘',przyroda:'🌿',pielgrzymka:'✝️','sporty wodne':'🛶',architektura:'🏗️'};
+    actsEl.innerHTML = item.acts.map(a=>`<span class="act-badge">${icons[a]||''} ${a}</span>`).join('');
+  }
+
+  // Fuel info
+  updateModalFuel();
+
+  // Stars
+  const ud = userData[key]||{};
+  const rating = ud.rating||0;
+  document.querySelectorAll('.star').forEach(s=>s.classList.toggle('active', parseInt(s.dataset.v)<=rating));
+  document.getElementById('modal-date').value = ud.date||'';
+  document.getElementById('modal-note').value = ud.note||'';
+  const photosUrl = ud.photos||'';
+  document.getElementById('modal-photos-url').value = photosUrl;
+  document.getElementById('modal-photos-btn').classList.toggle('has-photos', !!photosUrl);
+
+  // Custom photo / Pixabay
+  const removeBtn = document.getElementById('remove-photo-btn');
+  if(removeBtn) removeBtn.style.display = ud.customPhoto ? 'inline-flex' : 'none';
+  const wrap = document.getElementById('modal-img-wrap');
+  const pxKey = localStorage.getItem('pixabay-key');
+
+  if(ud.customPhoto){
+    wrap.innerHTML = '';
+    const img = document.createElement('img'); img.className='modal-img'; img.src=ud.customPhoto;
+    wrap.appendChild(img);
+    item._cachedImg = ud.customPhoto;
+  } else if(item._cachedImg){
+    wrap.innerHTML = '';
+    const img = document.createElement('img'); img.className='modal-img'; img.src=item._cachedImg;
+    img.onerror = ()=>{ wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; };
+    wrap.appendChild(img);
+  } else if(!pxKey){
+    wrap.innerHTML = '<div class="modal-img-placeholder" style="cursor:pointer" onclick="document.getElementById(\'pixabay-setup\').style.display=\'flex\'">📷<br><small style="font-size:.65rem;color:var(--muted)">Kliknij aby włączyć zdjęcia</small></div>';
+  } else {
+    wrap.innerHTML = '<div class="modal-img-placeholder" style="font-size:1.2rem">⏳</div>';
+    const pxQuery = item.pxq || item.name.split('(')[0].trim();
+    fetch(`https://pixabay.com/api/?key=${pxKey}&q=${encodeURIComponent(pxQuery)}&image_type=photo&per_page=5&safesearch=true&orientation=horizontal`)
+      .then(r=>r.json())
+      .then(data=>{
+        const hit = (data.hits||[])[0];
+        if(hit){
+          item._cachedImg = hit.webformatURL;
+          wrap.innerHTML = '';
+          const img = document.createElement('img'); img.className='modal-img'; img.src=hit.webformatURL;
+          img.onerror = ()=>{ wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; };
+          wrap.appendChild(img);
+          // Odśwież miniaturę na karcie/liście
+          updateThumb(key, item);
+        } else { wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; }
+      })
+      .catch(()=>{ wrap.innerHTML='<div class="modal-img-placeholder">🏔️</div>'; });
+  }
+
+  // Weather
+  loadModalWeather(item);
+
+  // Nearby
+  nearbyCurrentItem = item;
+  nearbyCurrentTab = 'our';
+  document.querySelectorAll('.nearby-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  renderNearbyOur(item);
+
+  // Update thumb after modal closes
+  setTimeout(()=>{ if(item._cachedImg) updateThumb(key, item); }, 500);
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+function updateThumb(key, item){
+  const thumbEl = document.getElementById('thumb-'+key);
+  if(!thumbEl || thumbEl.querySelector('img')) return;
+  const src = (userData[key]||{}).customPhoto || item._cachedImg;
+  if(!src) return;
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0;';
+  img.onload = ()=>{ const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove(); };
+  img.onerror = ()=> img.remove();
+  thumbEl.appendChild(img);
+}
+
+// ── TOGGLE (z animacją i sprawdzaniem odznak) ──
+window.toggle = function(key, el, e){
+  if(e) e.stopPropagation();
+  if(guestMode) return;
+  const wasChecked = !!checked[key];
+  checked[key] = !checked[key];
+  if(!checked[key]) delete checked[key];
+  save();
+  el.classList.toggle('checked', !!checked[key]);
+  const cb = el.querySelector('.checkbox,.card-chk');
+  if(cb) cb.textContent = checked[key] ? '✓' : '';
+  updateStats();
+  applyFilters();
+  if(!wasChecked && checked[key]){
+    el.classList.add('just-checked');
+    setTimeout(()=> el.classList.remove('just-checked'), 600);
+    checkNewBadges();
+  }
+  if(leafletMap) updateMapMarkers();
 };
 
 </script>
