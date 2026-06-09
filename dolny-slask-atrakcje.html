@@ -3911,14 +3911,56 @@ window.setView = function(mode){
 };
 
 function applyViewMode(){
+  // Ustaw klasy na listach
   document.querySelectorAll('.items-list').forEach(list=>{
     list.classList.toggle('card-view', currentView==='card');
     list.classList.toggle('list-view', currentView==='list');
   });
-  // Rebuild items for card view (needs thumb)
-  if(currentView==='card') rebuildCardItems();
-  // Bug fix #3: przebuduj itemy do struktury listowej po przełączeniu z card
-  if(currentView==='list'){ rebuildListItems(); lazyLoadCardPhotos(); }
+  // Przebuduj itemy dla odpowiedniego widoku
+  if(currentView==='card'){
+    rebuildCardItems();
+  } else {
+    // Przebuduj wszystkie itemy do struktury listowej
+    document.querySelectorAll('.items-list.list-view .item').forEach(el=>{
+      const key = el.dataset.key;
+      if(!key) return;
+      const [ci,ii] = key.split('-').map(Number);
+      const item = DATA[ci]?.items[ii];
+      if(!item) return;
+      const isChecked = el.classList.contains('checked');
+      const ud = userData[key]||{};
+      const isKids = el.dataset.kids==='1';
+      const inPlan = plannerItems.includes(key);
+      const itemIdx = el.dataset.idx||'';
+      const photo = ud.customPhoto || item._cachedImg || null;
+      const catEmoji = DATA[ci].cat.split(' ')[0];
+
+      el.innerHTML = `
+        <div class="item-thumb ct-${ci%10}" id="thumb-${key}" style="width:52px;min-width:52px;height:52px;border-radius:6px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem;">
+          ${photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" onerror="this.remove()">`:``}
+          <span class="card-thumb-emoji">${catEmoji}</span>
+        </div>
+        <span class="item-idx">${itemIdx}</span>
+        <span class="checkbox">${isChecked?'✓':''}</span>
+        <div class="item-body">
+          <div class="item-name">${item.name}${isKids?' <span class="kids-badge">👶 Rodzinne</span>':''}</div>
+          <div class="item-short">${item.short||''}</div>
+          ${ud.rating>0?`<div class="item-stars">${'★'.repeat(ud.rating)}${'☆'.repeat(5-ud.rating)}</div>`:''}
+          ${ud.note?`<div class="item-note-badge">📝 ${ud.note.slice(0,40)}${ud.note.length>40?'…':''}</div>`:''}
+          <div class="item-meta">
+            ${item.km?`<span class="badge badge-dist">📍 ${item.km} km</span>`:''}
+            ${item.time?`<span class="badge badge-time">🕐 ${item.time}</span>`:''}
+            <button class="info-btn" onclick="openModal(DATA[${ci}].items[${ii}],'${key}')">📖 opis</button>
+            <button class="add-to-plan-btn${inPlan?' in-plan':''}" onclick="togglePlanItem('${key}',this)">+ Plan</button>
+            ${ud.photos?`<button class="info-btn photos-quick-btn" onclick="window.open('${ud.photos}','_blank')">📷 zdjęcia</button>`:''}
+          </div>
+        </div>`;
+
+      el.querySelector('.checkbox').addEventListener('click',e=>toggle(key,el,e));
+      el.querySelector('.item-name').addEventListener('click',e=>toggle(key,el,e));
+    });
+    setTimeout(lazyLoadCardPhotos, 50);
+  }
 }
 
 // Przebudowuje itemy z card-view DOM do pełnej struktury list-view
