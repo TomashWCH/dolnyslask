@@ -3903,9 +3903,9 @@ function buildCardItemHTML(el, ci, ii, item, catEmoji){
   el.innerHTML = `
     <div class="card-thumb ct-${ci % 10}" id="thumb-${key}">
       ${photo
-        ? `<img src="${photo}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`
-        : `<span class="card-thumb-emoji">${catEmoji}</span>`
-      }
+        ? `<img src="${photo}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" onload="this.nextSibling&&this.nextSibling.remove()" onerror="this.remove()">`
+        : ``}
+      <span class="card-thumb-emoji" ${photo?'style="display:none"':''}>${catEmoji}</span>
     </div>
     <div class="card-body-wrap">
       <div class="card-check-name">
@@ -3979,6 +3979,10 @@ function lazyLoadCardPhotos(){
             img.onload = ()=>{ const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove(); };
             img.onerror = ()=> img.remove();
             thumbEl.appendChild(img);
+            // Jeśli obraz już w cache - onload nie odpali
+            if(img.complete && img.naturalWidth > 0){
+              const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove();
+            }
           }
         })
         .catch(()=>{});
@@ -4193,6 +4197,9 @@ function updateThumb(key, item){
   img.onload = ()=>{ const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove(); };
   img.onerror = ()=> img.remove();
   thumbEl.appendChild(img);
+  if(img.complete && img.naturalWidth > 0){
+    const em = thumbEl.querySelector('.card-thumb-emoji'); if(em) em.remove();
+  }
 }
 
 // ── TOGGLE (z animacją i sprawdzaniem odznak) ──
