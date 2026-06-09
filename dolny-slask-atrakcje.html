@@ -48,7 +48,7 @@ button.danger:hover{background:var(--accent);color:var(--paper);}
 .cat-count{font-size:.72rem;color:var(--muted);font-weight:300;}
 .cat-toggle{font-size:.72rem;color:var(--muted);transition:transform .2s;}
 .category-section.collapsed .cat-toggle{transform:rotate(-90deg);}
-.category-section.collapsed .items-list{display:none;}
+.category-section.collapsed .items-list{display:none!important;}
 .items-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:0;padding:0 .8rem .8rem;}
 .item{display:flex;align-items:flex-start;gap:.6rem;padding:.6rem .7rem;cursor:pointer;border-radius:4px;transition:background .15s;user-select:none;}
 .item:hover{background:rgba(0,0,0,.04);}
@@ -569,7 +569,7 @@ body.dark-mode .cat-progress-wrap{background:rgba(255,255,255,.1);}
 .cat-count{font-size:.7rem;color:var(--muted);flex-shrink:0;}
 .cat-toggle{font-size:.65rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
 .category-section.collapsed .cat-toggle{transform:rotate(-90deg);}
-.category-section.collapsed .items-list{display:none;}
+.category-section.collapsed .items-list{display:none!important;}
 
 /* Kolory kategorii */
 .cat-0 .cat-pill{background:rgba(139,44,44,.12);color:#8b2c2c;border:1px solid rgba(139,44,44,.2);}
@@ -2027,8 +2027,6 @@ window.clearPlanner = function(){
   renderPlanner();
 };
 
-// init planner badge on load
-updatePlannerBadge();
 
 // ── MODAL ────────────────────────────────────────────────────────────────────
 function openModal(item, key){
@@ -2168,8 +2166,6 @@ function refreshItemBadges(key){
   } else if(noteEl){ noteEl.remove(); }
 }
 
-// init
-render();
 
 const BADGES = [
   // Ogólne
@@ -2612,18 +2608,7 @@ window.skipPixabay = function(){
 };
 
 // Pokaż setup przy pierwszym uruchomieniu jeśli nie ma klucza
-(function initPixabay(){
-  const key = localStorage.getItem('pixabay-key');
-  const skip = localStorage.getItem('pixabay-skip');
-  if(!key && !skip){
-    setTimeout(()=>{ document.getElementById('pixabay-setup').style.display='flex'; }, 800);
-  }
-  // Jeśli klucz jest - wstępnie wypełnij pole
-  if(key){
-    const inp = document.getElementById('px-key-input');
-    if(inp) inp.value = key;
-  }
-})();
+
 
 // Przycisk w panelu Dane - możliwość zmiany klucza
 window.openPixabaySetup = function(){
@@ -2712,12 +2697,7 @@ function updateModalFuel(){
 }
 
 // Init fuel from localStorage
-(function initFuel(){
-  const savedPrice = localStorage.getItem('fuel-price');
-  const savedBurn  = localStorage.getItem('fuel-burn');
-  if(savedPrice) fuelPrice = parseFloat(savedPrice);
-  if(savedBurn)  fuelBurn  = parseFloat(savedBurn);
-})();
+
 
 // ══════════════════════════════════════════════════════
 // PATCH applyFilters to include activity filter
@@ -3154,15 +3134,7 @@ window.weekendToPlanner = function(keys){
 // ══════════════════════════════════════════════════════
 // Init: set weekend date on load
 // ══════════════════════════════════════════════════════
-(function initWeekend(){
-  const inp=document.getElementById('weekend-date');
-  if(!inp) return;
-  const today=new Date();
-  const daysUntilSat=(6-today.getDay()+7)%7||7;
-  const sat=new Date(today);
-  sat.setDate(today.getDate()+daysUntilSat);
-  inp.value=sat.toISOString().split('T')[0];
-})();
+
 
 
 // ══════════════════════════════════════════════════════
@@ -3585,13 +3557,7 @@ window.toggleDarkMode = function(){
 };
 
 // Init dark mode from localStorage
-(function initDarkMode(){
-  if(localStorage.getItem('dark-mode')){
-    document.body.classList.add('dark-mode');
-    const btn = document.getElementById('dark-toggle');
-    if(btn) btn.textContent = '☀️';
-  }
-})();
+
 
 // ══════════════════════════════════════════════════════
 // WŁASNE ZDJĘCIE
@@ -3812,22 +3778,7 @@ function showBadgeToast(badge){
 }
 
 // Inicjuj earned badges przy starcie (bez pokazywania powiadomień)
-(function initBadges(){
-  if(typeof BADGES === 'undefined') return;
-  // Dodaj już zdobyte do setu bez animacji
-  const total   = DATA.reduce((s,c)=>s+c.items.length, 0);
-  const done    = Object.values(checked).filter(Boolean).length;
-  const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
-  const actCounts = {};
-  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
-    if(checked[getKey(ci,ii)] && item.acts)
-      item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
-  }));
-  BADGES.forEach(b=>{
-    if(b.check(done, userData, catDone, actCounts)) earnedBadges.add(b.id);
-  });
-  localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
-})();
+
 
 
 // ══════════════════════════════════════════════════════
@@ -4075,20 +4026,7 @@ function rebuildCategoryHeaders(){
 }
 
 // Init view mode - po załadowaniu DOM
-(function initView(){
-  const saved = localStorage.getItem('view-mode') || 'card';
-  currentView = saved;
-  const btnCard = document.getElementById('view-btn-card');
-  const btnList = document.getElementById('view-btn-list');
-  if(btnCard) btnCard.classList.toggle('active', saved==='card');
-  if(btnList) btnList.classList.toggle('active', saved==='list');
-  // Zastosuj od razu po render()
-  setTimeout(()=>{
-    applyCategoryStyles();
-    rebuildCategoryHeaders();
-    applyViewMode();
-  }, 0);
-})();
+
 
 
 // ══════════════════════════════════════════════════════
@@ -4277,6 +4215,78 @@ window.toggle = function(key, el, e){
   }
   if(leafletMap) updateMapMarkers();
 };
+
+// ══════════════════════════════════════════════════════
+// INICJALIZACJA - na końcu gdy wszystkie funkcje gotowe
+// ══════════════════════════════════════════════════════
+(function init(){
+  // 1. Dark mode (przed renderem żeby nie było flash)
+  if(localStorage.getItem('dark-mode')){
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('dark-toggle');
+    if(btn) btn.textContent = '☀️';
+  }
+
+  // 2. Pixabay klucz
+  const pxKey = localStorage.getItem('pixabay-key');
+  const pxSkip = localStorage.getItem('pixabay-skip');
+  if(!pxKey && !pxSkip){
+    setTimeout(()=>{ document.getElementById('pixabay-setup').style.display='flex'; }, 800);
+  }
+  if(pxKey){
+    const inp = document.getElementById('px-key-input');
+    if(inp) inp.value = pxKey;
+  }
+
+  // 3. Fuel
+  const savedPrice = localStorage.getItem('fuel-price');
+  const savedBurn  = localStorage.getItem('fuel-burn');
+  if(savedPrice) fuelPrice = parseFloat(savedPrice);
+  if(savedBurn)  fuelBurn  = parseFloat(savedBurn);
+
+  // 4. Render główny
+  render();
+
+  // 5. Style kategorii i widok (po render)
+  applyCategoryStyles();
+  rebuildCategoryHeaders();
+
+  // 6. View mode
+  const savedView = localStorage.getItem('view-mode') || 'card';
+  currentView = savedView;
+  const btnCard = document.getElementById('view-btn-card');
+  const btnList = document.getElementById('view-btn-list');
+  if(btnCard) btnCard.classList.toggle('active', savedView==='card');
+  if(btnList) btnList.classList.toggle('active', savedView==='list');
+  applyViewMode();
+
+  // 7. Planner badge
+  updatePlannerBadge();
+
+  // 8. Weekend default date
+  const inp = document.getElementById('weekend-date');
+  if(inp){
+    const today = new Date();
+    const daysUntilSat = (6 - today.getDay() + 7) % 7 || 7;
+    const sat = new Date(today);
+    sat.setDate(today.getDate() + daysUntilSat);
+    inp.value = sat.toISOString().split('T')[0];
+  }
+
+  // 9. Earned badges (bez animacji)
+  if(typeof BADGES !== 'undefined'){
+    const total   = DATA.reduce((s,c)=>s+c.items.length, 0);
+    const done    = Object.values(checked).filter(Boolean).length;
+    const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
+    const actCounts = {};
+    DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+      if(checked[getKey(ci,ii)] && item.acts)
+        item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
+    }));
+    BADGES.forEach(b=>{ if(b.check(done, userData, catDone, actCounts)) earnedBadges.add(b.id); });
+    localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
+  }
+})();
 
 </script>
 </body>
