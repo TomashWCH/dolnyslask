@@ -2381,10 +2381,28 @@ function renderStats(){
       if(b.id==='trekker')   prog=`${actCounts['trekking']||0}/10`;
       if(b.id==='sightseer') prog=`${actCounts['zwiedzanie']||0}/15`;
       if(b.id==='historian') prog=`${actCounts['historia']||0}/10`;
-      if(b.id==='km500'||b.id==='km2000'){
+      if(b.id.startsWith('km')){
         let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; }));
-        prog=`${km}/${b.id==='km500'?500:2000} km`;
+        const target = parseInt(b.id.replace('km',''));
+        prog=`${km}/${target} km`;
       }
+      if(b.id.startsWith('wytrwaly_')){ const t=parseInt(b.id.split('_')[1]); prog=`${d}/${t}`; }
+      if(b.id==='zamkowy_szlak') prog=`${catDone[0]||0}/8`;
+      if(b.id==='gorski_szlak')  prog=`${catDone[1]||0}/8`;
+      if(b.id==='podziemny')     prog=`${catDone[5]||0}/6`;
+      if(b.id==='korona_5')      prog=`${catDone[9]||0}/5`;
+      if(b.id==='korona_half')   prog=`${catDone[9]||0}/11`;
+      if(b.id==='koscielny')     prog=`${catDone[3]||0}/5`;
+      if(b.id==='uzdrowiskowy')  prog=`${catDone[7]||0}/5`;
+      if(b.id==='miejski')       prog=`${catDone[8]||0}/5`;
+      if(b.id==='skalny')        prog=`${catDone[2]||0}/6`;
+      if(b.id==='przyrodnik')    prog=`${catDone[6]||0}/5`;
+      if(b.id==='oceniacz_20')   prog=`${Object.values(userData).filter(x=>x.rating>0).length}/20`;
+      if(b.id==='piatki_10')     prog=`${Object.values(userData).filter(x=>x.rating===5).length}/10`;
+      if(b.id==='kronikarz')     prog=`${Object.values(userData).filter(x=>x.note&&x.note.trim()).length}/10`;
+      if(b.id==='fotograf_5')    prog=`${Object.values(userData).filter(x=>x.photos&&x.photos.trim()).length}/5`;
+      if(b.id==='data_10')       prog=`${Object.values(userData).filter(x=>x.date&&x.date.trim()).length}/10`;
+      if(b.id==='data_25')       prog=`${Object.values(userData).filter(x=>x.date&&x.date.trim()).length}/25`;
     }
     return `<div class="${cls}">
       <div class="badge-icon">${b.icon}</div>
@@ -2894,6 +2912,43 @@ const EXTRA_BADGES = [
   {id:'dzieciecy_mistrz', icon:'🏆', name:'Dziecięcy Mistrz', desc:'Zalicz wszystkie 15 miejsc przyjaznych dzieciom 👶', check:(d,u,cats)=>{
     let n=0, total=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(item.kids){ total++; if(checked[getKey(ci,ii)]) n++; } })); return total>0 && n>=total;
   }},
+
+  // ── WYTRWAŁOŚĆ ──
+  {id:'wytrwaly_3',   icon:'🔥', name:'Rozgrzewka',      desc:'Zalicz 3 miejsca — dobry start!',                      check:(d)=>d>=3},
+  {id:'wytrwaly_7',   icon:'📅', name:'Tydzień odkryć',  desc:'Zalicz 7 miejsc',                                      check:(d)=>d>=7},
+  {id:'wytrwaly_15',  icon:'💪', name:'Wytrwały',        desc:'Zalicz 15 miejsc — to już coś!',                       check:(d)=>d>=15},
+  {id:'wytrwaly_30',  icon:'🏅', name:'Zaangażowany',    desc:'30 zaliczonych miejsc',                                check:(d)=>d>=30},
+  {id:'wytrwaly_40',  icon:'⭐', name:'Ambitny',          desc:'40 zaliczonych miejsc',                                check:(d)=>d>=40},
+  {id:'wytrwaly_60',  icon:'🌟', name:'Pasjonat',         desc:'60 zaliczonych miejsc',                                check:(d)=>d>=60},
+  {id:'wytrwaly_80',  icon:'💎', name:'Niezłomny',        desc:'80 zaliczonych miejsc — niemal komplet!',              check:(d)=>d>=80},
+  {id:'wytrwaly_90',  icon:'🚀', name:'Finalista',        desc:'90 miejsc — metka widoczna!',                          check:(d)=>d>=90},
+
+  // ── SPECJALNE TRASY ──
+  {id:'zamkowy_szlak', icon:'🏰', name:'Szlak Zamków',   desc:'Zalicz 8 zamków i twierdz',                            check:(d,u,cats)=>cats[0]>=8},
+  {id:'gorski_szlak',  icon:'⛰️', name:'Szlak Górski',   desc:'Zalicz 8 szczytów',                                    check:(d,u,cats)=>cats[1]>=8},
+  {id:'podziemny',     icon:'⛏️', name:'Podziemnik',     desc:'Zalicz 6 podziemi i kopalń',                           check:(d,u,cats)=>cats[5]>=6},
+  {id:'wroclawianin',  icon:'🏛️', name:'Wrocławianin',   desc:'Zalicz wszystkie atrakcje Wrocławia',                  check:(d,u,cats)=>cats[4]>=DATA[4].items.length},
+  {id:'korona_5',      icon:'👑', name:'Korona w toku',   desc:'Zalicz 5 szczytów Korony Sudetów',                     check:(d,u,cats)=>cats[9]>=5},
+  {id:'korona_half',   icon:'👑', name:'Pół Korony',      desc:'Zalicz 11 szczytów Korony Sudetów',                    check:(d,u,cats)=>cats[9]>=11},
+  {id:'koscielny',     icon:'🕌', name:'Pielgrzym',       desc:'Zalicz 5 kościołów i klasztorów',                      check:(d,u,cats)=>cats[3]>=5},
+  {id:'uzdrowiskowy',  icon:'🎡', name:'Kuracjusz',       desc:'Zalicz 5 uzdrowisk i ciekawostek',                     check:(d,u,cats)=>cats[7]>=5},
+  {id:'miejski',       icon:'🌆', name:'Urbanista',       desc:'Zalicz 5 miast i miasteczek',                          check:(d,u,cats)=>cats[8]>=5},
+  {id:'skalny',        icon:'🪨', name:'Geolog',          desc:'Zalicz 6 formacji skalnych',                           check:(d,u,cats)=>cats[2]>=6},
+  {id:'przyrodnik',    icon:'🏞️', name:'Przyrodnik',      desc:'Zalicz 5 parków i rezerwatów',                         check:(d,u,cats)=>cats[6]>=5},
+
+  // ── JAKOŚĆ ZWIEDZANIA ──
+  {id:'oceniacz_20',   icon:'⭐', name:'Recenzent',       desc:'Oceń gwiazdkami 20 miejsc',                            check:(d,u)=>Object.values(u).filter(x=>x.rating>0).length>=20},
+  {id:'piatki_10',     icon:'🌟', name:'Perfekcjonista',  desc:'Daj ocenę 5★ aż 10 miejscom',                         check:(d,u)=>Object.values(u).filter(x=>x.rating===5).length>=10},
+  {id:'kronikarz',     icon:'📖', name:'Kronikarz',       desc:'Napisz notatki do 10 miejsc',                          check:(d,u)=>Object.values(u).filter(x=>x.note&&x.note.trim()).length>=10},
+  {id:'fotograf_5',    icon:'📷', name:'Fotograf',        desc:'Dodaj albumy do 5 miejsc',                             check:(d,u)=>Object.values(u).filter(x=>x.photos&&x.photos.trim()).length>=5},
+  {id:'data_10',       icon:'📅', name:'Punktualny',      desc:'Zapisz daty wizyt w 10 miejscach',                     check:(d,u)=>Object.values(u).filter(x=>x.date&&x.date.trim()).length>=10},
+  {id:'data_25',       icon:'🗓️', name:'Dziennikarz',     desc:'Zapisz daty wizyt w 25 miejscach',                     check:(d,u)=>Object.values(u).filter(x=>x.date&&x.date.trim()).length>=25},
+
+  // ── KM ──
+  {id:'km100',  icon:'🚗', name:'Pierwsza setka',  desc:'100 km do zaliczonych miejsc łącznie',   check:()=>{ let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; })); return km>=100; }},
+  {id:'km500',  icon:'🛣️', name:'500 km',          desc:'500 km do zaliczonych miejsc łącznie',   check:()=>{ let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; })); return km>=500; }},
+  {id:'km1000', icon:'🚀', name:'1000 km',         desc:'1000 km do zaliczonych miejsc łącznie',  check:()=>{ let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; })); return km>=1000; }},
+  {id:'km2000', icon:'✈️', name:'2000 km',         desc:'2000 km do zaliczonych miejsc łącznie',  check:()=>{ let km=0; DATA.forEach((c,ci)=>c.items.forEach((item,ii)=>{ if(checked[getKey(ci,ii)]) km+=item.km||0; })); return km>=2000; }},
 ];
 
 // Patch BADGES array after it's defined
