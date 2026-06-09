@@ -4919,79 +4919,66 @@ function renderActivityChart(){
   if(!el) return;
 
   // Zbierz daty wizyt
-  const dateCounts = {};
+  const monthCounts = {};
+  let totalWithDates = 0;
+
   Object.values(userData).forEach(ud=>{
     if(ud.date && ud.date.trim()){
-      dateCounts[ud.date] = (dateCounts[ud.date]||0) + 1;
+      const d = new Date(ud.date + 'T12:00:00');
+      if(!isNaN(d)){
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        monthCounts[key] = (monthCounts[key]||0) + 1;
+        totalWithDates++;
+      }
     }
   });
 
-  const totalWithDates = Object.values(dateCounts).reduce((s,v)=>s+v, 0);
   if(totalWithDates === 0){
     el.innerHTML = '<div class="reco-empty">Zapisz daty wizyt w opisach atrakcji aby zobaczyć wykres aktywności.</div>';
     return;
   }
 
-  // Wygeneruj ostatnie 52 tygodnie (1 rok)
+  // Wygeneruj ostatnie 12 miesięcy
+  const months = [];
   const today = new Date();
-  const oneYearAgo = new Date(today);
-  oneYearAgo.setFullYear(today.getFullYear() - 1);
-
-  // Zbuduj siatkę tygodni
-  const weeks = [];
-  let current = new Date(oneYearAgo);
-  // Cofnij do początku tygodnia (poniedziałek)
-  const dow = current.getDay();
-  current.setDate(current.getDate() - (dow === 0 ? 6 : dow - 1));
-
-  while(current <= today){
-    const week = [];
-    for(let d=0; d<7; d++){
-      const dateStr = current.toISOString().split('T')[0];
-      const count = dateCounts[dateStr] || 0;
-      const level = count === 0 ? 0 : count === 1 ? 1 : count <= 2 ? 2 : count <= 3 ? 3 : 4;
-      const isInRange = current >= oneYearAgo && current <= today;
-      week.push({dateStr, count, level, inRange: isInRange, day: new Date(current)});
-      current.setDate(current.getDate() + 1);
-    }
-    weeks.push(week);
+  for(let i=11; i>=0; i--){
+    const d = new Date(today.getFullYear(), today.getMonth()-i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('pl-PL',{month:'short'});
+    const year = d.getFullYear();
+    months.push({key, label, year, count: monthCounts[key]||0});
   }
 
-  // Grupuj tygodnie po miesiącach
-  const months = ['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
-  let lastMonth = -1;
-  const monthLabels = weeks.map(week=>{
-    const m = week[0].day.getMonth();
-    if(m !== lastMonth){ lastMonth = m; return months[m]; }
-    return '';
-  });
+  const maxCount = Math.max(...months.map(m=>m.count), 1);
 
-  const html = `<div class="activity-chart">
-    <div class="activity-months">
-      ${weeks.map((week,wi)=>`
-        <div class="activity-month">
-          <div class="activity-month-label">${monthLabels[wi]}</div>
-          ${week.map(day=>
-            day.inRange
-              ? `<div class="activity-day level-${day.level}" title="${day.dateStr}${day.count>0?' · '+day.count+' miejsc':''}"></div>`
-              : `<div class="activity-day" style="opacity:0"></div>`
-          ).join('')}
-        </div>`
-      ).join('')}
-    </div>
-    <div class="activity-legend">
-      <span>Mniej</span>
-      <div class="activity-legend-dot" style="background:rgba(0,0,0,.06)"></div>
-      <div class="activity-legend-dot activity-day level-1"></div>
-      <div class="activity-legend-dot activity-day level-2"></div>
-      <div class="activity-legend-dot activity-day level-3"></div>
-      <div class="activity-legend-dot activity-day level-4"></div>
-      <span>Więcej</span>
-    </div>
-    <div class="activity-total">${totalWithDates} wizyt z zapisaną datą w ostatnim roku</div>
-  </div>`;
+  // Zmień tytuł sekcji
+  const titleEl = el.closest('.stats-section')?.querySelector('.stats-section-title');
+  if(titleEl) titleEl.textContent = 'Aktywność odkryć (ostatnie 12 miesięcy)';
 
-  el.innerHTML = html;
+  const bars = months.map(m=>{
+    const pct = Math.round(m.count / maxCount * 100);
+    const isCurrentMonth = m.key === `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0;">
+      <div style="font-size:.62rem;color:var(--moss);font-weight:700;height:16px;line-height:16px;">${m.count>0?m.count:''}</div>
+      <div style="width:100%;background:rgba(0,0,0,.06);border-radius:3px 3px 0 0;height:80px;display:flex;align-items:flex-end;overflow:hidden;">
+        <div style="width:100%;height:${pct}%;background:${isCurrentMonth?'var(--gold)':'var(--moss)'};border-radius:3px 3px 0 0;opacity:${m.count>0?1:0.3};transition:height .4s ease;min-height:${m.count>0?'3px':'0'};"></div>
+      </div>
+      <div style="font-size:.6rem;color:var(--muted);text-align:center;line-height:1.2;">${m.label}${m.year!==today.getFullYear()?`<br>${m.year}`:''}</div>
+    </div>`;
+  }).join('');
+
+  const bestMonth = months.reduce((best,m)=>m.count>best.count?m:best, months[0]);
+  const bestLabel = bestMonth.count > 0
+    ? `Najaktywniejszy miesiąc: <strong>${bestMonth.label} ${bestMonth.year}</strong> (${bestMonth.count} miejsc)`
+    : '';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:4px;padding:.5rem 0 0;">
+      ${bars}
+    </div>
+    ${bestLabel?`<div style="font-size:.72rem;color:var(--muted);margin-top:.5rem;">${bestLabel}</div>`:''}
+    <div style="font-size:.68rem;color:var(--muted);margin-top:.2rem;">${totalWithDates} wizyt z zapisaną datą łącznie · złoty = bieżący miesiąc</div>
+  `;
 }
 
 // ══════════════════════════════════════════════════════
