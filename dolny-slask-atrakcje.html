@@ -2386,7 +2386,7 @@ function renderStats(){
         const target = parseInt(b.id.replace('km',''));
         prog=`${km}/${target} km`;
       }
-      if(b.id.startsWith('wytrwaly_')){ const t=parseInt(b.id.split('_')[1]); prog=`${d}/${t}`; }
+      if(b.id.startsWith('wytrwaly_')){ const t=parseInt(b.id.split('_')[1]); prog=`${done}/${t}`; }
       if(b.id==='zamkowy_szlak') prog=`${catDone[0]||0}/8`;
       if(b.id==='gorski_szlak')  prog=`${catDone[1]||0}/8`;
       if(b.id==='podziemny')     prog=`${catDone[5]||0}/6`;
