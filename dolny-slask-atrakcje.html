@@ -716,15 +716,6 @@ body.dark-mode .activity-day.level-4{background:rgba(122,184,122,1);}
 .pwa-banner-text span{opacity:.7;font-size:.75rem;}
 .pwa-banner-install{font-family:'Lato',sans-serif;font-size:.78rem;font-weight:700;padding:.45rem 1.1rem;background:var(--gold);color:var(--ink);border:none;cursor:pointer;border-radius:3px;white-space:nowrap;}
 .pwa-banner-close{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:1.1rem;padding:.2rem .4rem;}
-
-/* ── BUCKET LIST (priorytety) ── */
-.item.priority{border-color:var(--gold)!important;box-shadow:0 0 0 1.5px var(--gold)!important;}
-.item.priority::after{content:'⭐';position:absolute;top:4px;left:4px;font-size:.7rem;line-height:1;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));}
-.items-list.card-view .item.priority::after{top:6px;left:6px;font-size:.8rem;}
-.items-list.list-view .item.priority::after{top:50%;transform:translateY(-50%);left:2px;font-size:.65rem;}
-.fb-priority.active{background:var(--gold)!important;color:var(--ink)!important;border-color:var(--gold)!important;}
-/* Long press visual feedback */
-.item.pressing{transform:scale(.97);transition:transform .1s;}
 </style>
 </head>
 <body>
@@ -778,7 +769,6 @@ body.dark-mode .activity-day.level-4{background:rgba(122,184,122,1);}
     <button onclick="filterView('todo')" id="fb-todo" class="fb">○ <span class="btn-label">Do zrobienia</span></button>
     <button onclick="filterView('done')" id="fb-done" class="fb">✓ <span class="btn-label">Zaliczone</span></button>
     <button onclick="toggleKids()" id="fb-kids" class="fb">👶 <span class="btn-label">Rodzinne</span></button>
-      <button onclick="togglePriority()" id="fb-priority" class="fb fb-priority">⭐ <span class="btn-label">Priorytety</span></button>
     <button class="danger" onclick="clearAll()">↺ <span class="btn-label">Resetuj</span></button>
     <button onclick="toggleStats()" id="stats-btn">📊 <span class="btn-label">Statystyki</span></button>
     <button onclick="toggleMap()" id="map-btn">🗺️ <span class="btn-label">Mapa</span></button>
@@ -2534,7 +2524,6 @@ window.exportData = function(){
     checked: JSON.parse(localStorage.getItem('ds-checked') || '{}'),
     userData: JSON.parse(localStorage.getItem('ds-userdata') || '{}'),
     planner: JSON.parse(localStorage.getItem('ds-planner') || '[]'),
-    priorities: JSON.parse(localStorage.getItem('ds-priorities') || '[]'),
   };
   const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2563,10 +2552,9 @@ window.importData = function(event){
         event.target.value = '';
         return;
       }
-      if(data.checked)    { localStorage.setItem('ds-checked',    JSON.stringify(data.checked));    checked      = data.checked;  }
-      if(data.userData)   { localStorage.setItem('ds-userdata',   JSON.stringify(data.userData));   userData     = data.userData; }
-      if(data.planner)    { localStorage.setItem('ds-planner',    JSON.stringify(data.planner));    plannerItems = data.planner; }
-      if(data.priorities) { localStorage.setItem('ds-priorities', JSON.stringify(data.priorities)); priorities   = new Set(data.priorities); applyPriorityClasses(); }
+      if(data.checked)  { localStorage.setItem('ds-checked',  JSON.stringify(data.checked));  checked  = data.checked;  }
+      if(data.userData) { localStorage.setItem('ds-userdata', JSON.stringify(data.userData)); userData = data.userData; }
+      if(data.planner)  { localStorage.setItem('ds-planner',  JSON.stringify(data.planner));  plannerItems = data.planner; }
       render();
       updatePlannerBadge();
       alert('✓ Dane wczytane pomyślnie!');
@@ -5034,121 +5022,6 @@ window.renderStats = function(){
   _origRenderStatsNew();
   renderRecommendations();
   renderActivityChart();
-};
-
-// ══════════════════════════════════════════════════════
-// BUCKET LIST - priorytety (long press)
-// ══════════════════════════════════════════════════════
-let priorities = new Set(JSON.parse(localStorage.getItem('ds-priorities') || '[]'));
-let priorityOnly = false;
-
-function savePriorities(){
-  localStorage.setItem('ds-priorities', JSON.stringify([...priorities]));
-}
-
-window.togglePriority = function(){
-  priorityOnly = !priorityOnly;
-  document.getElementById('fb-priority').classList.toggle('active', priorityOnly);
-  applyFilters();
-};
-
-// Patch applyFilters - filtruj priorytety
-const _origApplyFiltersPrio = applyFilters;
-window.applyFilters = function(){
-  _origApplyFiltersPrio();
-  if(priorityOnly){
-    document.querySelectorAll('.item').forEach(el=>{
-      if(!priorities.has(el.dataset.key)) el.classList.add('hidden');
-    });
-    document.querySelectorAll('.category-section').forEach(sec=>{
-      const vis = sec.querySelectorAll('.item:not(.hidden)').length;
-      sec.classList.toggle('hidden', vis===0);
-    });
-  }
-};
-
-// Zastosuj klasę priority przy renderze
-const _origRenderPrio = render;
-window.render = function(){
-  _origRenderPrio();
-  applyPriorityClasses();
-};
-
-function applyPriorityClasses(){
-  document.querySelectorAll('.item').forEach(el=>{
-    el.classList.toggle('priority', priorities.has(el.dataset.key));
-  });
-}
-
-// Long press handler
-function addLongPressHandler(el, key){
-  let timer = null;
-
-  const start = (e)=>{
-    timer = setTimeout(()=>{
-      timer = null;
-      toggleItemPriority(key, el);
-      // Wibracja na telefonie
-      if(navigator.vibrate) navigator.vibrate(50);
-    }, 600);
-    el.classList.add('pressing');
-  };
-
-  const cancel = ()=>{
-    if(timer){ clearTimeout(timer); timer = null; }
-    el.classList.remove('pressing');
-  };
-
-  el.addEventListener('mousedown', start);
-  el.addEventListener('touchstart', start, {passive:true});
-  el.addEventListener('mouseup', cancel);
-  el.addEventListener('mouseleave', cancel);
-  el.addEventListener('touchend', cancel);
-  el.addEventListener('touchcancel', cancel);
-
-  // Context menu (prawy przycisk) na desktop
-  el.addEventListener('contextmenu', e=>{
-    e.preventDefault();
-    toggleItemPriority(key, el);
-  });
-}
-
-function toggleItemPriority(key, el){
-  if(priorities.has(key)){
-    priorities.delete(key);
-    el.classList.remove('priority');
-    showToast('Usunięto z priorytetów');
-  } else {
-    priorities.add(key);
-    el.classList.add('priority');
-    showToast('⭐ Dodano do priorytetów!');
-  }
-  savePriorities();
-}
-
-// Toast do potwierdzenia
-let toastTimer2 = null;
-function showToast(msg){
-  let toast = document.getElementById('priority-toast');
-  if(!toast){
-    toast = document.createElement('div');
-    toast.id = 'priority-toast';
-    toast.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:.45rem 1.1rem;border-radius:20px;font-size:.78rem;font-weight:700;z-index:300;transition:opacity .2s;pointer-events:none;white-space:nowrap;';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  if(toastTimer2) clearTimeout(toastTimer2);
-  toastTimer2 = setTimeout(()=>{ toast.style.opacity = '0'; }, 1800);
-}
-
-// Patch buildItemEl żeby dodawał long press
-const _origBuildItemEl = buildItemEl;
-window.buildItemEl = function(item, ci, ii, key, isChecked, ud, isKids, idx){
-  const el = _origBuildItemEl(item, ci, ii, key, isChecked, ud, isKids, idx);
-  addLongPressHandler(el, key);
-  if(priorities.has(key)) el.classList.add('priority');
-  return el;
 };
 
 
