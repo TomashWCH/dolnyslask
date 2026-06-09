@@ -2359,7 +2359,7 @@ function renderStats(){
 
   // ── Badges ──
   const badgesEl = document.getElementById('stats-badges');
-  badgesEl.innerHTML = BADGES.map(b=>{
+  try { badgesEl.innerHTML = BADGES.map(b=>{
     const earned = b.check(done, userData, catDone, actCounts);
     const cls = earned ? 'badge-card earned' : 'badge-card locked';
     let prog='';
@@ -2412,10 +2412,11 @@ function renderStats(){
       ${earned?'<div class="badge-progress" style="color:var(--gold)">✓ Zdobyta!</div>':''}
     </div>`;
   }).join('');
+  } catch(e) { console.error('Badge render error:', e); badgesEl.innerHTML = '<div style="color:red">Błąd odznak: '+e.message+'</div>'; }
 
   // Dodatkowe sekcje
-  renderTimeline();
-  renderExplorerLevel();
+  try { renderTimeline(); } catch(e) { console.error('Timeline error:', e); }
+  try { renderExplorerLevel(); } catch(e) { console.error('Explorer error:', e); }
 }
 // ══════════════════════════════════════════════════════
 // DATA PANEL
