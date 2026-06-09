@@ -1855,6 +1855,7 @@ function render(){
   });
   updateStats();
   applyFilters();
+  if(currentView==='list') setTimeout(lazyLoadCardPhotos, 100);
 }
 
 // ── PLANNER ──────────────────────────────────────────────────────────────────
@@ -3917,7 +3918,7 @@ function applyViewMode(){
   // Rebuild items for card view (needs thumb)
   if(currentView==='card') rebuildCardItems();
   // Bug fix #3: przebuduj itemy do struktury listowej po przełączeniu z card
-  if(currentView==='list') rebuildListItems();
+  if(currentView==='list'){ rebuildListItems(); lazyLoadCardPhotos(); }
 }
 
 // Przebudowuje itemy z card-view DOM do pełnej struktury list-view
@@ -3936,7 +3937,13 @@ function rebuildListItems(){
     const inPlan = plannerItems.includes(key);
     const idx = el.dataset.idx || '';
 
+    const photo = ud.customPhoto || item._cachedImg || null;
+    const catEmoji = DATA[ci].cat.split(' ')[0];
     el.innerHTML = `
+      <div class="item-thumb ct-${ci % 10}" id="thumb-${key}" style="width:52px;min-width:52px;height:52px;border-radius:6px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem;">
+        ${photo ? `<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;" onload="this.previousSibling&&this.previousSibling.remove()" onerror="this.remove()">` : ''}
+        <span class="card-thumb-emoji"${photo?' style="display:none"':''}>${catEmoji}</span>
+      </div>
       <span class="item-idx">${idx}</span>
       <span class="checkbox">${isChecked?'✓':''}</span>
       <div class="item-body">
