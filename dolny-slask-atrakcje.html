@@ -636,6 +636,40 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
   .items-list.card-view{grid-template-columns:repeat(2,1fr);gap:8px;padding:.4rem .6rem .8rem;}
   .card-thumb{height:75px;}
 }
+
+/* ── POGODA NA KARTACH ── */
+.weather-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;cursor:help;border:1.5px solid rgba(255,255,255,.4);box-shadow:0 1px 3px rgba(0,0,0,.2);margin-left:auto;}
+.weather-dot.sunny{background:#f7c948;}
+.weather-dot.cloudy{background:#b0bec5;}
+.weather-dot.rain{background:#64b5f6;}
+.weather-dot.storm{background:#7e57c2;}
+.weather-dot.snow{background:#e3f2fd;border-color:#90caf9;}
+.weather-dot.fog{background:#cfd8dc;}
+.item-weather{position:absolute;top:6px;right:6px;}
+.items-list.card-view .item{position:relative;}
+.items-list.list-view .item-weather{margin-left:auto;flex-shrink:0;}
+
+/* ── POBLISKIE W PLANERZE ── */
+.planner-nearby{margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(0,0,0,.08);}
+.planner-nearby-title{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+.planner-nearby-list{display:flex;flex-direction:column;gap:.3rem;max-height:250px;overflow-y:auto;}
+.planner-nearby-item{display:flex;align-items:center;gap:.5rem;padding:.4rem .5rem;background:var(--parchment);border-radius:3px;border:1px solid rgba(0,0,0,.06);font-size:.78rem;}
+.planner-nearby-item .pn-dist{font-size:.65rem;color:var(--sky);white-space:nowrap;}
+.planner-nearby-item .pn-name{flex:1;font-weight:600;}
+.planner-nearby-item .pn-cat{font-size:.65rem;color:var(--muted);}
+.planner-nearby-add{font-size:.65rem;font-weight:700;padding:.2rem .5rem;border:1.5px solid var(--moss);color:var(--moss);background:none;cursor:pointer;border-radius:2px;white-space:nowrap;}
+.planner-nearby-add:hover{background:var(--moss);color:white;}
+.planner-nearby-add.added{background:var(--moss);color:white;}
+
+/* ── POZIOMY ODKRYWCY ── */
+.explorer-level{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;background:var(--parchment);border-radius:4px;margin-bottom:.8rem;border:1px solid rgba(0,0,0,.08);}
+.explorer-badge{font-size:2rem;line-height:1;}
+.explorer-info{flex:1;}
+.explorer-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--ink);}
+.explorer-subtitle{font-size:.7rem;color:var(--muted);margin-top:.1rem;}
+.explorer-bar-wrap{height:6px;background:rgba(0,0,0,.08);border-radius:3px;margin-top:.4rem;overflow:hidden;}
+.explorer-bar{height:100%;border-radius:3px;transition:width .8s ease;}
+.explorer-next{font-size:.65rem;color:var(--muted);margin-top:.2rem;}
 </style>
 </head>
 <body>
@@ -761,6 +795,12 @@ body.dark-mode .card-chk{border-color:rgba(255,255,255,.3);}
     <div class="stats-section">
       <div class="stats-section-title">Twoje oceny</div>
       <div id="stats-ratings"></div>
+    </div>
+
+    <!-- Poziom odkrywcy -->
+    <div class="stats-section">
+      <div class="stats-section-title">Poziom odkrywcy</div>
+      <div id="stats-explorer"></div>
     </div>
 
     <!-- Km total + heatmap -->
@@ -4294,6 +4334,260 @@ window.toggle = function(key, el, e){
     localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
   }
 })();
+
+// ══════════════════════════════════════════════════════
+// POGODA NA KARTACH - kolorowe kropki
+// ══════════════════════════════════════════════════════
+const weatherCache = {}; // key: "lat_lng_date" -> {code, dot}
+
+function weatherDotClass(code){
+  if(code === 0) return 'sunny';
+  if(code <= 2)  return 'sunny';
+  if(code <= 3)  return 'cloudy';
+  if(code <= 49) return 'fog';
+  if(code <= 67) return 'rain';
+  if(code <= 77) return 'snow';
+  if(code <= 82) return 'rain';
+  return 'storm';
+}
+
+function weatherDotTitle(code){
+  if(code === 0)  return 'Słonecznie ☀️';
+  if(code <= 2)   return 'Częściowe zachmurzenie 🌤️';
+  if(code <= 3)   return 'Pochmurno ☁️';
+  if(code <= 49)  return 'Mgła 🌫️';
+  if(code <= 59)  return 'Mżawka 🌦️';
+  if(code <= 67)  return 'Deszcz 🌧️';
+  if(code <= 77)  return 'Śnieg ❄️';
+  if(code <= 82)  return 'Przelotny deszcz 🌧️';
+  return 'Burza ⛈️';
+}
+
+function loadWeatherDots(){
+  // Ładuj pogodę dla widocznych itemów (lazy)
+  const today = new Date().toISOString().split('T')[0];
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const el = entry.target;
+      const key = el.dataset.key;
+      if(!key) return;
+      const [ci,ii] = key.split('-').map(Number);
+      const item = DATA[ci]?.items[ii];
+      if(!item?.lat) return;
+      observer.unobserve(el);
+
+      const cacheKey = `${item.lat}_${item.lng}_${today}`;
+      if(weatherCache[cacheKey]){
+        injectWeatherDot(el, weatherCache[cacheKey]);
+        return;
+      }
+
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${item.lat}&longitude=${item.lng}&daily=weathercode&forecast_days=1&timezone=Europe%2FWarsaw`)
+        .then(r=>r.json())
+        .then(data=>{
+          const code = data.daily?.weathercode?.[0] ?? 99;
+          weatherCache[cacheKey] = code;
+          injectWeatherDot(el, code);
+        })
+        .catch(()=>{});
+    });
+  }, {rootMargin:'100px'});
+
+  document.querySelectorAll('.item').forEach(el=>{
+    if(!el.querySelector('.weather-dot')) observer.observe(el);
+  });
+}
+
+function injectWeatherDot(el, code){
+  if(el.querySelector('.weather-dot')) return;
+  const dot = document.createElement('div');
+  dot.className = `weather-dot ${weatherDotClass(code)} item-weather`;
+  dot.title = weatherDotTitle(code);
+  el.appendChild(dot);
+}
+
+// ══════════════════════════════════════════════════════
+// POZIOMY ODKRYWCY - 10 stopni
+// ══════════════════════════════════════════════════════
+const EXPLORER_LEVELS = [
+  {min:0,   max:5,   icon:'🌱', title:'Początkujący',      subtitle:'Stawiasz pierwsze kroki w odkrywaniu Dolnego Śląska', color:'#7ab840'},
+  {min:5,   max:10,  icon:'🚶', title:'Wędrowiec',         subtitle:'Już kilka miejsc za Tobą — to dopiero początek!',     color:'#5a9a30'},
+  {min:10,  max:20,  icon:'🧭', title:'Odkrywca',          subtitle:'Masz oko do ciekawych miejsc',                        color:'#4a8a20'},
+  {min:20,  max:30,  icon:'🏕️', title:'Turysta',           subtitle:'Dolny Śląsk zaczyna zdradzać swoje tajemnice',        color:'#4a7fa5'},
+  {min:30,  max:45,  icon:'⛺', title:'Podróżnik',         subtitle:'Połowa drogi przed Tobą — i jakie odkrycia!',         color:'#3a6f95'},
+  {min:45,  max:60,  icon:'🗺️', title:'Poszukiwacz',       subtitle:'Prawdziwy znawca regionu',                            color:'#c9a84c'},
+  {min:60,  max:75,  icon:'🏔️', title:'Zdobywca',          subtitle:'Imponująca kolekcja odkryć!',                         color:'#b07020'},
+  {min:75,  max:88,  icon:'⚔️', title:'Rycerz Doliny',     subtitle:'Niewielu dotarło tak daleko',                         color:'#8b2c2c'},
+  {min:88,  max:99,  icon:'👑', title:'Mistrz Sudetów',    subtitle:'Prawie wszystko odkryte — finisz w zasięgu!',         color:'#c9a84c'},
+  {min:99,  max:101, icon:'🦅', title:'Legenda Dolnego Śląska', subtitle:'Kompletna lista! Gratulacje — jesteś legendą!', color:'#1a1a2e'},
+];
+
+function renderExplorerLevel(){
+  const el = document.getElementById('stats-explorer');
+  if(!el) return;
+  const done = Object.values(checked).filter(Boolean).length;
+  const total = DATA.reduce((s,c)=>s+c.items.length,0);
+
+  const level = EXPLORER_LEVELS.find(l=> done >= l.min && done < l.max) || EXPLORER_LEVELS[EXPLORER_LEVELS.length-1];
+  const levelIdx = EXPLORER_LEVELS.indexOf(level);
+  const pct = Math.round((done - level.min) / (level.max - level.min) * 100);
+  const nextLevel = EXPLORER_LEVELS[levelIdx+1];
+
+  let html = `<div class="explorer-level">
+    <div class="explorer-badge">${level.icon}</div>
+    <div class="explorer-info">
+      <div class="explorer-title">${level.title}</div>
+      <div class="explorer-subtitle">${level.subtitle}</div>
+      <div class="explorer-bar-wrap">
+        <div class="explorer-bar" style="width:${done>=total?100:pct}%;background:linear-gradient(90deg,${level.color},${level.color}aa)"></div>
+      </div>
+      <div class="explorer-next">${done >= total
+        ? `🎉 Osiągnięto maksymalny poziom! ${done}/${total} atrakcji`
+        : nextLevel
+          ? `${done}/${total} atrakcji · do poziomu <strong>${nextLevel.icon} ${nextLevel.title}</strong> jeszcze ${nextLevel.min - done}`
+          : `${done}/${total} atrakcji`
+      }</div>
+    </div>
+  </div>`;
+
+  // Pokaż wszystkie poziomy jako mini lista
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.4rem;margin-top:.5rem;">`;
+  EXPLORER_LEVELS.forEach((l,i)=>{
+    const unlocked = done >= l.min;
+    const current = l === level;
+    html += `<div style="padding:.4rem .6rem;border-radius:3px;border:1.5px solid ${current?l.color:'rgba(0,0,0,.08)'};background:${current?l.color+'15':'transparent'};opacity:${unlocked?1:0.4};">
+      <span style="font-size:.9rem">${l.icon}</span>
+      <span style="font-size:.68rem;font-weight:700;color:${current?l.color:'var(--muted)'};margin-left:.3rem;">${l.title}</span>
+      <div style="font-size:.58rem;color:var(--muted)">${l.min}–${l.max===101?total:l.max} miejsc</div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// POBLISKIE W PLANERZE
+// ══════════════════════════════════════════════════════
+function renderPlannerNearby(ordered){
+  if(ordered.length === 0) return '';
+
+  // Zbierz punkty trasy (Wrocław + atrakcje)
+  const routePoints = [
+    {lat: WROCLAW.lat, lng: WROCLAW.lng},
+    ...ordered.map(s=>({lat:s.item.lat, lng:s.item.lng})),
+    {lat: WROCLAW.lat, lng: WROCLAW.lng}
+  ];
+
+  // Znajdź niezaliczone miejsca z listy w promieniu 30km od dowolnego punktu trasy
+  const RADIUS = 30;
+  const nearby = [];
+  const inPlanner = new Set(plannerItems);
+
+  DATA.forEach((cat,ci)=>{
+    cat.items.forEach((item,ii)=>{
+      const key = getKey(ci,ii);
+      if(inPlanner.has(key)) return; // już w planerze
+      if(!item.lat||!item.lng) return;
+
+      // Znajdź min odległość od dowolnego punktu trasy
+      let minDist = Infinity;
+      routePoints.forEach(pt=>{
+        const d = haversine(pt.lat, pt.lng, item.lat, item.lng);
+        if(d < minDist) minDist = d;
+      });
+
+      if(minDist <= RADIUS){
+        nearby.push({item, key, ci, ii, dist:Math.round(minDist), catIcon:cat.cat.split(' ')[0], catName:cat.cat.replace(/^\S+ /,'')});
+      }
+    });
+  });
+
+  if(nearby.length === 0) return '';
+  nearby.sort((a,b)=>a.dist-b.dist);
+
+  let html = `<div class="planner-nearby">
+    <div class="planner-nearby-title">📍 W pobliżu trasy (do 30 km) — ${nearby.length} miejsc</div>
+    <div class="planner-nearby-list">`;
+
+  nearby.slice(0,15).forEach(({item,key,ci,ii,dist,catIcon,catName})=>{
+    const ud = userData[key]||{};
+    const stars = ud.rating ? `<span style="color:#f0b429;font-size:.65rem">${'★'.repeat(ud.rating)}</span>` : '';
+    const isChecked = !!checked[key];
+    html += `<div class="planner-nearby-item">
+      <span style="font-size:1rem">${catIcon}</span>
+      <div style="flex:1;min-width:0">
+        <div class="pn-name">${item.name}${isChecked?' <span style="color:var(--moss);font-size:.6rem">✓</span>':''} ${stars}</div>
+        <div class="pn-cat">${catName}</div>
+      </div>
+      <span class="pn-dist">${dist} km</span>
+      <button class="planner-nearby-add" id="pna-${key}" onclick="addNearbyToPlanner('${key}','${ci}','${ii}',this)"
+        ${plannerItems.length>=6?'disabled title="Maksymalnie 6 miejsc"':''}>+ Plan</button>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+window.addNearbyToPlanner = function(key, ci, ii, btn){
+  if(plannerItems.length >= 6){ alert('Maksymalnie 6 atrakcji w trasie.'); return; }
+  if(plannerItems.includes(key)) return;
+  plannerItems.push(key);
+  savePlanner();
+  updatePlannerBadge();
+  btn.textContent = '✓ Dodano';
+  btn.classList.add('added');
+  btn.disabled = true;
+  // Przebuduj planer z nowym miejscem i zaktualizuj TSP
+  renderPlanner();
+};
+
+// Patch renderPlanner żeby dodać sekcję pobliskich
+const _origRenderPlanner = renderPlanner;
+window.renderPlanner = function(){
+  _origRenderPlanner();
+  // Po wyrenderowaniu dodaj sekcję pobliskich
+  const content = document.getElementById('planner-content');
+  if(!content) return;
+  if(plannerItems.length === 0) return;
+
+  // Odtwórz ordered z aktualnych plannerItems przez TSP
+  const stops = plannerItems.map(key=>({key, item:keyToItem(key)})).filter(s=>s.item?.lat);
+  if(stops.length === 0) return;
+  const {order} = solveTSP(stops);
+  const ordered = order.map(i=>stops[i]);
+
+  const nearbyHtml = renderPlannerNearby(ordered);
+  if(nearbyHtml) content.insertAdjacentHTML('beforeend', nearbyHtml);
+};
+
+// ══════════════════════════════════════════════════════
+// PATCH renderStats żeby pokazał poziom odkrywcy
+// ══════════════════════════════════════════════════════
+const _origRenderStatsExplorer = renderStats;
+window.renderStats = function(){
+  _origRenderStatsExplorer();
+  renderExplorerLevel();
+};
+
+// ══════════════════════════════════════════════════════
+// PATCH render żeby ładował kropki pogody
+// ══════════════════════════════════════════════════════
+const _origRenderWeatherDots = render;
+window.render = function(){
+  _origRenderWeatherDots();
+  setTimeout(loadWeatherDots, 200);
+};
+
+// Też po przełączeniu widoku
+const _origApplyViewWeather = applyViewMode;
+window.applyViewMode = function(){
+  _origApplyViewWeather();
+  setTimeout(loadWeatherDots, 300);
+};
+
 
 </script>
 </body>
