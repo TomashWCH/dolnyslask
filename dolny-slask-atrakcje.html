@@ -3995,6 +3995,7 @@ window.setView = function(mode){
   document.getElementById('view-btn-card').classList.toggle('active', mode==='card');
   document.getElementById('view-btn-list').classList.toggle('active', mode==='list');
   applyViewMode();
+  setTimeout(loadWeatherDots, 300);
 };
 
 function applyViewMode(){
@@ -4482,6 +4483,7 @@ window.toggle = function(key, el, e){
   if(btnCard) btnCard.classList.toggle('active', savedView==='card');
   if(btnList) btnList.classList.toggle('active', savedView==='list');
   applyViewMode();
+  setTimeout(loadWeatherDots, 500);
 
   // 7. Planner badge
   updatePlannerBadge();
@@ -4808,18 +4810,7 @@ window.renderPlanner = function(){
 // ══════════════════════════════════════════════════════
 // PATCH render żeby ładował kropki pogody
 // ══════════════════════════════════════════════════════
-const _origRenderWeatherDots = render;
-window.render = function(){
-  _origRenderWeatherDots();
-  setTimeout(loadWeatherDots, 200);
-};
-
-// Też po przełączeniu widoku
-const _origApplyViewWeather = applyViewMode;
-window.applyViewMode = function(){
-  _origApplyViewWeather();
-  setTimeout(loadWeatherDots, 300);
-};
+// weather render patches removed - handled in init()
 
 
 // ══════════════════════════════════════════════════════
@@ -5093,47 +5084,57 @@ function applyPriorityClasses(){
 // Long press handler
 function addLongPressHandler(el, key){
   let timer = null;
+  let didLongPress = false;
 
   const start = (e)=>{
+    didLongPress = false;
     timer = setTimeout(()=>{
       timer = null;
+      didLongPress = true;
       toggleItemPriority(key, el);
-      // Wibracja na telefonie
-      if(navigator.vibrate) navigator.vibrate(50);
+      if(navigator.vibrate) navigator.vibrate([30,20,30]);
+      el.classList.remove('pressing');
     }, 600);
     el.classList.add('pressing');
   };
 
-  const cancel = ()=>{
+  const cancel = (e)=>{
     if(timer){ clearTimeout(timer); timer = null; }
     el.classList.remove('pressing');
+  };
+
+  const touchEndHandler = (e)=>{
+    cancel(e);
+    // Zablokuj click jeśli long press odpalił
+    if(didLongPress){
+      e.preventDefault();
+      didLongPress = false;
+    }
   };
 
   el.addEventListener('mousedown', start);
   el.addEventListener('touchstart', start, {passive:true});
   el.addEventListener('mouseup', cancel);
   el.addEventListener('mouseleave', cancel);
-  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchend', touchEndHandler);
   el.addEventListener('touchcancel', cancel);
-
-  // Context menu (prawy przycisk) na desktop
-  el.addEventListener('contextmenu', e=>{
-    e.preventDefault();
-    toggleItemPriority(key, el);
-  });
+  // Zablokuj contextmenu na desktop (prawy przycisk = nie chcemy menu)
+  el.addEventListener('contextmenu', e=>{ e.preventDefault(); e.stopPropagation(); });
 }
 
 function toggleItemPriority(key, el){
   if(priorities.has(key)){
     priorities.delete(key);
-    el.classList.remove('priority');
     showToast('Usunięto z priorytetów');
   } else {
     priorities.add(key);
-    el.classList.add('priority');
     showToast('⭐ Dodano do priorytetów!');
   }
   savePriorities();
+  // Odśwież wszystkie elementy z tym kluczem (card + list view)
+  document.querySelectorAll(`.item[data-key="${key}"]`).forEach(item=>{
+    item.classList.toggle('priority', priorities.has(key));
+  });
 }
 
 // Toast do potwierdzenia
