@@ -4440,78 +4440,6 @@ window.toggle = function(key, el, e){
 // ══════════════════════════════════════════════════════
 // INICJALIZACJA - na końcu gdy wszystkie funkcje gotowe
 // ══════════════════════════════════════════════════════
-(function init(){
-  // 1. Dark mode (przed renderem żeby nie było flash)
-  if(localStorage.getItem('dark-mode')){
-    document.body.classList.add('dark-mode');
-    const btn = document.getElementById('dark-toggle');
-    if(btn) btn.textContent = '☀️';
-  }
-
-  // 2. Pixabay klucz
-  const pxKey = localStorage.getItem('pixabay-key');
-  const pxSkip = localStorage.getItem('pixabay-skip');
-  if(!pxKey && !pxSkip){
-    setTimeout(()=>{ document.getElementById('pixabay-setup').style.display='flex'; }, 800);
-  }
-  if(pxKey){
-    const inp = document.getElementById('px-key-input');
-    if(inp) inp.value = pxKey;
-  }
-
-  // 3. Fuel
-  const savedPrice = localStorage.getItem('fuel-price');
-  const savedBurn  = localStorage.getItem('fuel-burn');
-  if(savedPrice) fuelPrice = parseFloat(savedPrice);
-  if(savedBurn)  fuelBurn  = parseFloat(savedBurn);
-
-  // 4. Render główny
-  render();
-
-  // 4b. Priority classes
-  applyPriorityClasses();
-
-  // 5. Style kategorii i widok (po render)
-  applyCategoryStyles();
-  rebuildCategoryHeaders();
-
-  // 6. View mode
-  const savedView = localStorage.getItem('view-mode') || 'card';
-  currentView = savedView;
-  const btnCard = document.getElementById('view-btn-card');
-  const btnList = document.getElementById('view-btn-list');
-  if(btnCard) btnCard.classList.toggle('active', savedView==='card');
-  if(btnList) btnList.classList.toggle('active', savedView==='list');
-  applyViewMode();
-  setTimeout(loadWeatherDots, 500);
-
-  // 7. Planner badge
-  updatePlannerBadge();
-
-  // 8. Weekend default date
-  const inp = document.getElementById('weekend-date');
-  if(inp){
-    const today = new Date();
-    const daysUntilSat = (6 - today.getDay() + 7) % 7 || 7;
-    const sat = new Date(today);
-    sat.setDate(today.getDate() + daysUntilSat);
-    inp.value = sat.toISOString().split('T')[0];
-  }
-
-  // 9. Earned badges (bez animacji)
-  if(typeof BADGES !== 'undefined'){
-    const total   = DATA.reduce((s,c)=>s+c.items.length, 0);
-    const done    = Object.values(checked).filter(Boolean).length;
-    const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
-    const actCounts = {};
-    DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
-      if(checked[getKey(ci,ii)] && item.acts)
-        item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
-    }));
-    BADGES.forEach(b=>{ if(b.check(done, userData, catDone, actCounts)) earnedBadges.add(b.id); });
-    localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
-  }
-})();
 
 // ══════════════════════════════════════════════════════
 // POGODA NA KARTACH - kolorowe kropki
@@ -5155,7 +5083,79 @@ function showToast(msg){
 
 // buildItemEl patch removed - using post-render approach
 
+// ── START ──
+(function init(){
+  // 1. Dark mode (przed renderem żeby nie było flash)
+  if(localStorage.getItem('dark-mode')){
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('dark-toggle');
+    if(btn) btn.textContent = '☀️';
+  }
 
+  // 2. Pixabay klucz
+  const pxKey = localStorage.getItem('pixabay-key');
+  const pxSkip = localStorage.getItem('pixabay-skip');
+  if(!pxKey && !pxSkip){
+    setTimeout(()=>{ document.getElementById('pixabay-setup').style.display='flex'; }, 800);
+  }
+  if(pxKey){
+    const inp = document.getElementById('px-key-input');
+    if(inp) inp.value = pxKey;
+  }
+
+  // 3. Fuel
+  const savedPrice = localStorage.getItem('fuel-price');
+  const savedBurn  = localStorage.getItem('fuel-burn');
+  if(savedPrice) fuelPrice = parseFloat(savedPrice);
+  if(savedBurn)  fuelBurn  = parseFloat(savedBurn);
+
+  // 4. Render główny
+  render();
+
+  // 4b. Priority classes
+  applyPriorityClasses();
+
+  // 5. Style kategorii i widok (po render)
+  applyCategoryStyles();
+  rebuildCategoryHeaders();
+
+  // 6. View mode
+  const savedView = localStorage.getItem('view-mode') || 'card';
+  currentView = savedView;
+  const btnCard = document.getElementById('view-btn-card');
+  const btnList = document.getElementById('view-btn-list');
+  if(btnCard) btnCard.classList.toggle('active', savedView==='card');
+  if(btnList) btnList.classList.toggle('active', savedView==='list');
+  applyViewMode();
+  setTimeout(loadWeatherDots, 500);
+
+  // 7. Planner badge
+  updatePlannerBadge();
+
+  // 8. Weekend default date
+  const inp = document.getElementById('weekend-date');
+  if(inp){
+    const today = new Date();
+    const daysUntilSat = (6 - today.getDay() + 7) % 7 || 7;
+    const sat = new Date(today);
+    sat.setDate(today.getDate() + daysUntilSat);
+    inp.value = sat.toISOString().split('T')[0];
+  }
+
+  // 9. Earned badges (bez animacji)
+  if(typeof BADGES !== 'undefined'){
+    const total   = DATA.reduce((s,c)=>s+c.items.length, 0);
+    const done    = Object.values(checked).filter(Boolean).length;
+    const catDone = DATA.map((cat,ci)=>cat.items.filter((_,ii)=>!!checked[getKey(ci,ii)]).length);
+    const actCounts = {};
+    DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+      if(checked[getKey(ci,ii)] && item.acts)
+        item.acts.forEach(a=>{ actCounts[a]=(actCounts[a]||0)+1; });
+    }));
+    BADGES.forEach(b=>{ if(b.check(done, userData, catDone, actCounts)) earnedBadges.add(b.id); });
+    localStorage.setItem('earned-badges', JSON.stringify([...earnedBadges]));
+  }
+})();
 </script>
 </body>
 </html>
