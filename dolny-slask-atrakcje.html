@@ -4450,14 +4450,16 @@ window.toggle = function(key, el, e){
 const weatherCache = {}; // key: "lat_lng_date" -> {code, dot}
 
 function weatherDotClass(code){
-  if(code === 0) return 'sunny';
-  if(code <= 2)  return 'sunny';
-  if(code <= 3)  return 'cloudy';
-  if(code <= 49) return 'fog';
-  if(code <= 67) return 'rain';
-  if(code <= 77) return 'snow';
-  if(code <= 82) return 'rain';
-  return 'storm';
+  if(code === 0)  return 'sunny';   // bezchmurnie
+  if(code <= 2)   return 'sunny';   // przeważnie słonecznie
+  if(code <= 3)   return 'cloudy';  // pochmurnie
+  if(code <= 49)  return 'fog';     // mgła
+  if(code <= 57)  return 'drizzle'; // mżawka / przelotne opady
+  if(code <= 67)  return 'rain';    // deszcz
+  if(code <= 77)  return 'snow';    // śnieg
+  if(code <= 82)  return 'drizzle'; // przelotny deszcz
+  if(code <= 86)  return 'snow';    // przelotny śnieg
+  return 'storm';                   // burza
 }
 
 function weatherDotTitle(code){
@@ -4465,10 +4467,11 @@ function weatherDotTitle(code){
   if(code <= 2)   return 'Częściowe zachmurzenie 🌤️';
   if(code <= 3)   return 'Pochmurno ☁️';
   if(code <= 49)  return 'Mgła 🌫️';
-  if(code <= 59)  return 'Mżawka 🌦️';
+  if(code <= 57)  return 'Przelotne opady 🌦️';
   if(code <= 67)  return 'Deszcz 🌧️';
   if(code <= 77)  return 'Śnieg ❄️';
-  if(code <= 82)  return 'Przelotny deszcz 🌧️';
+  if(code <= 82)  return 'Przelotny deszcz 🌦️';
+  if(code <= 86)  return 'Przelotny śnieg 🌨️';
   return 'Burza ⛈️';
 }
 
