@@ -1836,10 +1836,13 @@ function applyFilters(){
     const isKids = el.dataset.kids === '1';
 
     const passFilter = currentFilter==='all' || (currentFilter==='done'&&isChecked) || (currentFilter==='todo'&&!isChecked);
+    // Pobierz item z DATA dla rozszerzonego wyszukiwania
+    const [ci,ii] = (el.dataset.key||'0-0').split('-').map(Number);
+    const itemData = DATA[ci]?.items[ii];
     const passSearch = !currentSearch || name.includes(currentSearch) ||
-      (item.short||'').toLowerCase().includes(currentSearch) ||
-      (item.desc||'').toLowerCase().includes(currentSearch) ||
-      (item.acts||[]).some(a=>a.toLowerCase().includes(currentSearch));
+      (itemData?.short||'').toLowerCase().includes(currentSearch) ||
+      (itemData?.desc||'').toLowerCase().includes(currentSearch) ||
+      (itemData?.acts||[]).some(a=>a.toLowerCase().includes(currentSearch));
     const passDist   = currentDist===0 || km<=currentDist;
     const passKids   = !kidsOnly || isKids;
 
@@ -2224,7 +2227,7 @@ function openModal(item, key){
 
   const ud = userData[key]||{};
   const rating = ud.rating||0;
-  document.querySelectorAll('.star').forEach(s=>{
+  document.querySelectorAll('#star-row .star').forEach(s=>{
     s.classList.toggle('active', parseInt(s.dataset.v)<=rating);
   });
   document.getElementById('modal-date').value = ud.date||'';
@@ -2267,7 +2270,7 @@ document.addEventListener('click', e=>{
   userData[key].rating = userData[key].rating===v ? 0 : v;
   saveUD();
   const rating = userData[key].rating;
-  document.querySelectorAll('.star').forEach(s=>s.classList.toggle('active', parseInt(s.dataset.v)<=rating));
+  document.querySelectorAll('#star-row .star').forEach(s=>s.classList.toggle('active', parseInt(s.dataset.v)<=rating));
   refreshItemBadges(key);
 });
 
@@ -4334,7 +4337,7 @@ window.openModal = function(item, key){
   // Stars
   const ud = userData[key]||{};
   const rating = ud.rating||0;
-  document.querySelectorAll('.star').forEach(s=>s.classList.toggle('active', parseInt(s.dataset.v)<=rating));
+  document.querySelectorAll('#star-row .star').forEach(s=>s.classList.toggle('active', parseInt(s.dataset.v)<=rating));
   document.getElementById('modal-date').value = ud.date||'';
   document.getElementById('modal-note').value = ud.note||'';
   const photosUrl = ud.photos||'';
