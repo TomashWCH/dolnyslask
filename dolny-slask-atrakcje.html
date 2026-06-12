@@ -2534,15 +2534,33 @@ window.toggleDataPanel = function(){
 };
 
 // ── EXPORT ───────────────────────────────────────────
+const APP_ID = 'dolnyslask';
+
+function buildNamesForExport(){
+  const ch = JSON.parse(localStorage.getItem('ds-checked') || '{}');
+  const ud = JSON.parse(localStorage.getItem('ds-userdata') || '{}');
+  const pl = JSON.parse(localStorage.getItem('ds-planner') || '[]');
+  const pr = JSON.parse(localStorage.getItem('ds-priorities') || '[]');
+  const allKeys = new Set([...Object.keys(ch), ...Object.keys(ud), ...pl, ...pr]);
+  const names = {};
+  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>{
+    const k = getKey(ci,ii);
+    if(allKeys.has(k)) names[k] = item.name;
+  }));
+  return names;
+}
+
 window.exportData = function(){
   const exportObj = {
-    version: 1,
+    version: 3,
+    app: APP_ID,
     exported: new Date().toISOString(),
     owner: 'Mój dziennik – Dolny Śląsk',
     checked: JSON.parse(localStorage.getItem('ds-checked') || '{}'),
     userData: JSON.parse(localStorage.getItem('ds-userdata') || '{}'),
     planner: JSON.parse(localStorage.getItem('ds-planner') || '[]'),
     priorities: JSON.parse(localStorage.getItem('ds-priorities') || '[]'),
+    names: buildNamesForExport(),
   };
   const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
@@ -2556,6 +2574,59 @@ window.exportData = function(){
 };
 
 // ── IMPORT ───────────────────────────────────────────
+// dopasowanie nazw między aplikacjami (tolerancja polskiej odmiany)
+function normTokens(s){
+  let t=(s||'').toLowerCase().replace(/ł/g,'l');
+  t=t.normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+  t=t.replace(/\(.*?\)/g,' ').replace(/[—–]/g,' ');
+  const stop=new Set(['w','we','na','k','i','z','ze','do','u','plus','m','npm']);
+  return t.split(/[^a-z0-9]+/).filter(x=>x&&!stop.has(x));
+}
+function tokenEq(a,b){
+  if(a===b)return true;
+  const s=a.length<=b.length?a:b, l=a.length<=b.length?b:a;
+  if(s.length<4)return false;
+  if(l.startsWith(s)&&l.length-s.length<=3)return true; // odmiana: pełny prefiks (Henryków/Henrykowie)
+  const n=s.length;let p=0;while(p<n&&a[p]===b[p])p++;
+  return n>=5&&p>=n-1&&l.length-s.length<=2;            // różnica najwyżej w ostatniej literze (Kletno/Kletnie)
+}
+function tokensSubset(small,big){ return small.every(t=>big.some(b=>tokenEq(t,b))); }
+function namesMatch(tokA,tokB){
+  if(!tokA.length||!tokB.length)return false;
+  return tokA.length<=tokB.length?tokensSubset(tokA,tokB):tokensSubset(tokB,tokA);
+}
+function coreTokens(s){
+  const cut=(s||'').split(/[—–]/)[0];
+  const t=normTokens(cut);
+  return t.length?t:normTokens(s);
+}
+function crossMatchKeys(foreignNames){
+  const own=[];
+  DATA.forEach((cat,ci)=>cat.items.forEach((item,ii)=>own.push({key:getKey(ci,ii),tokens:normTokens(item.name),core:coreTokens(item.name)})));
+  const sameTokens=(a,b)=>a.length===b.length&&[...a].sort().every((t,i)=>t===[...b].sort()[i]);
+  const map={};let matched=0,total=0;
+  for(const [fKey,fName] of Object.entries(foreignNames)){
+    total++;
+    // krok 1: rdzeń nazwy (część przed „—") — łapie tę samą atrakcję w wielu listach
+    const fCore=coreTokens(fName);
+    const coreHits=own.filter(o=>sameTokens(fCore,o.core));
+    if(coreHits.length){map[fKey]=coreHits.map(h=>h.key);matched++;continue;}
+    // krok 2: dopasowanie rozmyte pełnej nazwy
+    const fTok=normTokens(fName);
+    let hits=own.filter(o=>namesMatch(fTok,o.tokens));
+    // dopasowania dokładne mają pierwszeństwo przed rozmytymi (Śnieżnik vs Masyw Śnieżnika)
+    const exact=hits.filter(h=>sameTokens(fTok,h.tokens));
+    if(exact.length)hits=exact;
+    if(hits.length===1){map[fKey]=[hits[0].key];matched++;}
+    else if(hits.length>1){
+      // ta sama atrakcja w kilku kategoriach (np. Śnieżka w dwóch koronach) -> zalicz wszystkie
+      const sig=hits[0].tokens.join('|');
+      if(hits.every(h=>h.tokens.join('|')===sig)){map[fKey]=hits.map(h=>h.key);matched++;}
+    }
+  }
+  return {map,matched,total};
+}
+
 window.importData = function(event){
   const file = event.target.files[0];
   if(!file) return;
@@ -2565,6 +2636,22 @@ window.importData = function(event){
       const data = JSON.parse(e.target.result);
       if(!data.checked && !data.userData){
         alert('Nieprawidłowy plik danych.');
+        return;
+      }
+      const foreign = data.app && data.app !== APP_ID;
+      if(foreign && data.names){
+        // import krzyżowy (np. z aplikacji „Atrakcje Polski"): dopasuj po nazwach i DOŁĄCZ
+        const {map,matched,total}=crossMatchKeys(data.names);
+        let added=0;
+        Object.entries(data.checked||{}).forEach(([k,v])=>{(map[k]||[]).forEach(m=>{if(!checked[m]){checked[m]=v;added++;}});});
+        Object.entries(data.userData||{}).forEach(([k,v])=>{(map[k]||[]).forEach(m=>{if(!userData[m])userData[m]=v;});});
+        (data.priorities||[]).forEach(k=>{(map[k]||[]).forEach(m=>priorities.add(m));});
+        localStorage.setItem('ds-checked',JSON.stringify(checked));
+        localStorage.setItem('ds-userdata',JSON.stringify(userData));
+        savePriorities(); applyPriorityClasses();
+        render(); updatePlannerBadge();
+        alert(`✓ Import z aplikacji „${data.owner||data.app}":\n• dopasowano ${matched} z ${total} pozycji po nazwach\n• dopisano ${added} nowych zaliczeń\n(pozycje spoza Dolnego Śląska zostały pominięte)`);
+        event.target.value = '';
         return;
       }
       if(!confirm('Wczytać dane z pliku? Twoje obecne oceny, notatki i zaliczone miejsca zostaną zastąpione.')){
