@@ -3,7 +3,7 @@
    v2 - auto-update on new deploy
    ============================================================ */
 
-const CACHE_NAME = 'dolny-slask-v2';
+const CACHE_NAME = 'dolny-slask-v3';
 
 const PRECACHE = [
   './dolny-slask-atrakcje.html',
