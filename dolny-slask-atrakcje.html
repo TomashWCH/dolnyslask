@@ -1874,7 +1874,7 @@ function renderFlat(){
       const isKids = !!item.kids;
 
       const passFilter = currentFilter==='all' || (currentFilter==='done'&&isChecked) || (currentFilter==='todo'&&!isChecked);
-      const passSearch = !currentSearch || item.name.toLowerCase().includes(currentSearch);
+      const passSearch = !currentSearch || item.name.toLowerCase().includes(currentSearch) || (item.short||'').toLowerCase().includes(currentSearch) || (item.desc||'').toLowerCase().includes(currentSearch);
       const passDist   = currentDist===0 || item.km<=currentDist;
       const passKids   = !kidsOnly || isKids;
 
