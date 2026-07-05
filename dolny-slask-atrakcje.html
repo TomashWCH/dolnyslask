@@ -1992,8 +1992,8 @@ function osmIcon(tags){
 }
 
 const OVERPASS_MIRRORS=[
-  {url:'https://overpass.kumi.systems/api/interpreter', timeout:25000},
-  {url:'https://overpass-api.de/api/interpreter', timeout:25000},
+  {url:'https://overpass.kumi.systems/api/interpreter', timeout:28000},
+  {url:'https://overpass-api.de/api/interpreter', timeout:28000},
   {url:'https://overpass.osm.ch/api/interpreter', timeout:15000},
   {url:'https://overpass.private.coffee/api/interpreter', timeout:15000}
 ];
@@ -2023,7 +2023,7 @@ function renderNearbyOSM(item){
   el.innerHTML='<div style="font-size:.74rem;color:var(--muted);font-style:italic;">⏳ Pobieram atrakcje z OpenStreetMap…</div>';
   const radius=30000;
   const query=`
-[out:json][timeout:15];
+[out:json][timeout:24];
 (
   node["tourism"~"^(attraction|museum|zoo|aquarium|theme_park|viewpoint|gallery)$"](around:${radius},${item.lat},${item.lng});
   node["historic"~"^(castle|monument|ruins|memorial)$"](around:${radius},${item.lat},${item.lng});
@@ -2950,7 +2950,7 @@ function renderPlannerNearbyOSM(ord){
   const arounds=ord.map(s=>`(around:${radius},${s.item.lat},${s.item.lng})`);
   const mk=(filter)=>arounds.map(a=>`  node${filter}${a};`).join('\n');
   const query=`
-[out:json][timeout:20];
+[out:json][timeout:24];
 (
 ${mk('["tourism"~"^(attraction|museum|zoo|viewpoint|theme_park)$"]')}
 ${mk('["historic"~"^(castle|ruins|monument)$"]')}
